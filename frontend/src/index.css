@@ -8,3 +8,9 @@
 .cm-editor.cm-focused {
   outline: none;
 }
+
+.cm-ySelectionInfo {
+  opacity: 1 !important;
+  font-family: inherit;
+  padding: 1px 6px;
+}
