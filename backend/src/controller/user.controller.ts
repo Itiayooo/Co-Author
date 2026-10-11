@@ -40,6 +40,10 @@ export const login = async (req: Request, res: Response) => {
 }
 
 export const getMe = async (req: AuthRequest, res: Response) => {
-    const user = await User.findById(req.userId).select('-password')
-    res.json({ user })
+    const user = await User.findById(req.userId)
+    if (!user) {
+        res.status(404).json({ message: 'User not found' })
+        return
+    }
+    res.json({ user: { id: user.id, name: user.name, email: user.email } })
 }
