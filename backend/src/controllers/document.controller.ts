@@ -1,4 +1,4 @@
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { isValidObjectId } from 'mongoose'
 import { Document } from '../models/document.model.js'
 import { AuthRequest } from '../middleware/auth.middleware.js'
@@ -108,4 +108,14 @@ export const regenerateJoinCode = async (req: AuthRequest, res: Response) => {
         }
     }
     res.status(500).json({ message: 'Could not generate a unique join code' })
+}
+
+export const getDocumentByCode = async (req: Request, res: Response) => {
+    const code = String(req.params.code).toUpperCase()
+    const doc = await Document.findOne({ joinCode: code })
+    if (!doc) {
+        res.status(404).json({ message: 'Invalid or expired code' })
+        return
+    }
+    res.json({ document: { id: doc.id, title: doc.title, joinMode: doc.joinMode } })
 }
