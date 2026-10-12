@@ -72,11 +72,12 @@ export function useCollabDoc(docId: string, userName: string) {
         socket.on('connect', () => {
             setStatus('connected')
             socket.emit('join', docId, ydoc.clientID)
-            socket.emit('update', docId, Y.encodeStateAsUpdate(ydoc))
-            sendOwnAwareness()
         })
         socket.on('sync', (state: ArrayBuffer) => {
             Y.applyUpdate(ydoc, new Uint8Array(state), 'remote')
+            // push anything typed while offline, then announce ourselves
+            socket.emit('update', docId, Y.encodeStateAsUpdate(ydoc))
+            sendOwnAwareness()
         })
         socket.on('update', (update: ArrayBuffer) => {
             Y.applyUpdate(ydoc, new Uint8Array(update), 'remote')

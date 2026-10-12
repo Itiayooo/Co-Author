@@ -5,6 +5,7 @@ export interface IDocument {
     owner: Types.ObjectId
     joinCode: string
     joinMode: 'open' | 'approval'
+    state?: Buffer
 }
 
 const documentSchema = new Schema<IDocument>(
@@ -13,6 +14,7 @@ const documentSchema = new Schema<IDocument>(
         owner: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
         joinCode: { type: String, required: true, unique: true },
         joinMode: { type: String, enum: ['open', 'approval'], default: 'open' },
+        state: { type: Buffer },
     },
     { timestamps: true }
 )
