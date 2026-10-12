@@ -2,6 +2,9 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import AuthShell from '../components/AuthShell'
+import TextField from '../components/TextField'
+import Button from '../components/Button'
 
 export default function Register() {
     const { register } = useAuth()
@@ -16,7 +19,6 @@ export default function Register() {
         e.preventDefault()
         setError('')
         setSubmitting(true)
-
         try {
             await register(name, email, password)
             navigate('/')
@@ -28,66 +30,56 @@ export default function Register() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-            <form
-                onSubmit={handleSubmit}
-                className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-            >
-                <h1 className="mb-1 text-xl font-medium text-gray-900">
-                    Create an account
-                </h1>
-                <p className="mb-6 text-sm text-gray-500">
-                    Get started with Coauthor
-                </p>
-
+        <AuthShell
+            title="Create your account"
+            subtitle="Start a board and share its code with friends."
+            footer={
+                <>
+                    Already have an account?{' '}
+                    <Link to="/login" className="font-semibold underline">
+                        Log in
+                    </Link>
+                </>
+            }
+        >
+            <form onSubmit={handleSubmit}>
                 {error && (
-                    <p className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <p
+                        role="alert"
+                        className="mb-4 rounded-lg border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger"
+                    >
                         {error}
                     </p>
                 )}
-
-                <label className="mb-1 block text-sm text-gray-700">Name</label>
-                <input
-                    type="text"
+                <TextField
+                    label="Name"
                     required
+                    maxLength={40}
+                    autoComplete="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="mb-4 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-600"
                 />
-
-                <label className="mb-1 block text-sm text-gray-700">Email</label>
-                <input
+                <TextField
+                    label="Email"
                     type="email"
                     required
+                    autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="mb-4 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-600"
                 />
-
-                <label className="mb-1 block text-sm text-gray-700">Password</label>
-                <input
+                <TextField
+                    label="Password"
                     type="password"
                     required
+                    minLength={6}
+                    autoComplete="new-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="mb-6 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-600"
                 />
-
-                <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full rounded bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
-                >
+                <Button type="submit" disabled={submitting} className="mt-1 w-full">
                     {submitting ? 'Creating...' : 'Create account'}
-                </button>
-
-                <p className="mt-4 text-center text-sm text-gray-500">
-                    Already have an account?{' '}
-                    <Link to="/login" className="text-indigo-600 hover:underline">
-                        Log in
-                    </Link>
-                </p>
+                </Button>
             </form>
-        </div>
+        </AuthShell>
     )
 }
