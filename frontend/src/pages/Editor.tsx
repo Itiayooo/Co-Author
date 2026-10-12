@@ -26,7 +26,7 @@ export default function Editor() {
     const [doc, setDoc] = useState<Doc | null>(null)
     const [notFound, setNotFound] = useState(false)
     const [shareOpen, setShareOpen] = useState(false)
-    
+
 
     useEffect(() => {
         getDocument(id)
@@ -77,6 +77,7 @@ export default function Editor() {
             {shareOpen && doc && (
                 <ShareDialog doc={doc} onClose={() => setShareOpen(false)} onChange={setDoc} />
             )}
+            <JoinRequests requests={requests} onRespond={respond} />
         </div>
     )
 }
