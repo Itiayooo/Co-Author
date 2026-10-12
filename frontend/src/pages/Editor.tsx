@@ -5,11 +5,11 @@ import { useCollabDoc } from '../hooks/useCollabDoc'
 import { usePresence } from '../hooks/usePresence'
 import { getDocument, updateDocument } from '../lib/documents'
 import type { Doc } from '../types/document'
-import MarkdownEditor from '../components/MarkdownEditor'
 import PresenceAvatars from '../components/PresenceAvatars'
 import DocTitle from '../components/DocTitle'
 import ShareDialog from '../components/ShareDialog'
 import JoinRequests from '../components/JoinRequests'
+import EditorSplit from '../components/EditorSplit'
 
 
 const statusText = {
@@ -71,8 +71,8 @@ export default function Editor() {
                     </button>
                 </div>
             </header>
-            <main className="min-h-0 flex-1 overflow-auto">
-                {session && <MarkdownEditor ytext={session.ytext} awareness={session.awareness} />}
+            <main className="min-h-0 flex-1">
+                {session && <EditorSplit ytext={session.ytext} awareness={session.awareness} />}
             </main>
             {shareOpen && doc && (
                 <ShareDialog doc={doc} onClose={() => setShareOpen(false)} onChange={setDoc} />

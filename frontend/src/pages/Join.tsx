@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { getDocumentByCode } from '../lib/documents'
 import { useCollabDoc } from '../hooks/useCollabDoc'
 import { usePresence } from '../hooks/usePresence'
-import MarkdownEditor from '../components/MarkdownEditor'
+import EditorSplit from '../components/EditorSplit'
 import PresenceAvatars from '../components/PresenceAvatars'
 
 
@@ -46,8 +46,8 @@ function GuestRoom({ docId, title, name, code }: RoomProps) {
                     </span>
                 </div>
             </header>
-            <main className="min-h-0 flex-1 overflow-auto">
-                {session && <MarkdownEditor ytext={session.ytext} awareness={session.awareness} />}
+            <main className="min-h-0 flex-1">
+                {session && <EditorSplit ytext={session.ytext} awareness={session.awareness} />}
             </main>
         </div>
     )
