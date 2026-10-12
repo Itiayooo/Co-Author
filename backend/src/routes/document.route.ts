@@ -6,11 +6,14 @@ import {
     updateDocument,
     deleteDocument,
     regenerateJoinCode,
-    getDocumentByCode    
+    getDocumentByCode,
 } from '../controllers/document.controller.js'
 import { requireAuth } from '../middleware/auth.middleware.js'
 
 const router = Router()
+
+// public, must come before requireAuth
+router.get('/join/:code', getDocumentByCode)
 
 router.use(requireAuth)
 
@@ -20,7 +23,5 @@ router.get('/:id', getDocument)
 router.patch('/:id', updateDocument)
 router.delete('/:id', deleteDocument)
 router.post('/:id/regenerate-code', regenerateJoinCode)
-router.get('/join/:code', getDocumentByCode)
-router.use(requireAuth)
 
 export default router

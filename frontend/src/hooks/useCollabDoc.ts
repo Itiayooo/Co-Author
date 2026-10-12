@@ -34,11 +34,14 @@ interface AwarenessChange {
     removed: number[]
 }
 
-export function useCollabDoc(docId: string, userName: string) {
+export function useCollabDoc(docId: string, userName: string, joinCode?: string) {
     const [session, setSession] = useState<Session | null>(null)
     const [status, setStatus] = useState<ConnectionStatus>('connecting')
+    const [error, setError] = useState('')
 
     useEffect(() => {
+        setError('')
+
         const ydoc = new Y.Doc()
         const ytext = ydoc.getText('content')
         const awareness = new Awareness(ydoc)
@@ -71,7 +74,16 @@ export function useCollabDoc(docId: string, userName: string) {
 
         socket.on('connect', () => {
             setStatus('connected')
-            socket.emit('join', docId, ydoc.clientID)
+            socket.emit('join', {
+                docId,
+                clientId: ydoc.clientID,
+                token: localStorage.getItem('token') ?? undefined,
+                joinCode,
+            })
+        })
+        socket.on('doc-error', (message: string) => {
+            setError(message)
+            socket.disconnect()
         })
         socket.on('sync', (state: ArrayBuffer) => {
             Y.applyUpdate(ydoc, new Uint8Array(state), 'remote')
@@ -101,7 +113,7 @@ export function useCollabDoc(docId: string, userName: string) {
             ydoc.destroy()
             setSession(null)
         }
-    }, [docId, userName])
+    }, [docId, userName, joinCode])
 
-    return { session, status }
+    return { session, status, error }
 }
