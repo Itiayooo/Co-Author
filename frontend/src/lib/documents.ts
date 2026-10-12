@@ -29,3 +29,8 @@ export const regenerateJoinCode = (id: string) =>
     api<{ document: Doc }>(`/documents/${id}/regenerate-code`, {
         method: 'POST',
     }).then((r) => r.document)
+
+export const getDocumentByCode = (code: string) =>
+    api<{ document: { id: string; title: string; joinMode: 'open' | 'approval' } }>(
+        `/documents/join/${code}`
+    ).then((r) => r.document)

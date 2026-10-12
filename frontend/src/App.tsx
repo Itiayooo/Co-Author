@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Editor from './pages/Editor'
+import Join from './pages/Join'
 
 function Protected({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/join/:code" element={<Join />} />
           <Route path="/" element={<Protected><Dashboard /></Protected>} />
           <Route path="/doc/:id" element={<Protected><Editor /></Protected>} />
         </Routes>
