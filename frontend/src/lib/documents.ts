@@ -12,3 +12,20 @@ export const createDocument = (title?: string) =>
 
 export const deleteDocument = (id: string) =>
     api<{ message: string }>(`/documents/${id}`, { method: 'DELETE' })
+
+export const getDocument = (id: string) =>
+    api<{ document: Doc }>(`/documents/${id}`).then((r) => r.document)
+
+export const updateDocument = (
+    id: string,
+    data: Partial<Pick<Doc, 'title' | 'joinMode'>>
+) =>
+    api<{ document: Doc }>(`/documents/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+    }).then((r) => r.document)
+
+export const regenerateJoinCode = (id: string) =>
+    api<{ document: Doc }>(`/documents/${id}/regenerate-code`, {
+        method: 'POST',
+    }).then((r) => r.document)

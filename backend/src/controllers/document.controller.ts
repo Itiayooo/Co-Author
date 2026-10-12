@@ -84,3 +84,28 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
     }
     res.json({ message: 'Document deleted' })
 }
+
+export const regenerateJoinCode = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id
+    if (!isValidObjectId(id)) {
+        res.status(404).json({ message: 'Document not found' })
+        return
+    }
+    const doc = await Document.findOne({ _id: id, owner: req.userId })
+    if (!doc) {
+        res.status(404).json({ message: 'Document not found' })
+        return
+    }
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+            doc.joinCode = generateJoinCode()
+            await doc.save()
+            res.json({ document: toDto(doc) })
+            return
+        } catch (err: any) {
+            if (err.code !== 11000) throw err
+        }
+    }
+    res.status(500).json({ message: 'Could not generate a unique join code' })
+}
