@@ -8,6 +8,7 @@ import { usePresence } from '../hooks/usePresence'
 import MarkdownEditor from '../components/MarkdownEditor'
 import PresenceAvatars from '../components/PresenceAvatars'
 
+
 interface RoomProps {
     docId: string
     title: string
@@ -16,11 +17,22 @@ interface RoomProps {
 }
 
 function GuestRoom({ docId, title, name, code }: RoomProps) {
-    const { session, status, error } = useCollabDoc(docId, name, code)
+    const { session, status, error, waiting } = useCollabDoc(docId, name, code)
     const users = usePresence(session?.awareness ?? null)
 
     if (error) {
         return <div className="p-8 text-sm text-gray-700">{error}</div>
+    }
+
+    if (waiting) {
+        return (
+            <div className="flex min-h-screen items-center justify-center px-4">
+                <div className="text-center">
+                    <p className="font-medium text-gray-900">Waiting for the owner to let you in</p>
+                    <p className="mt-1 text-sm text-gray-500">This page opens as soon as they accept.</p>
+                </div>
+            </div>
+        )
     }
 
     return (

@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
+import type { Socket } from 'socket.io-client'
 import * as Y from 'yjs'
 import {
     Awareness,
@@ -23,6 +24,11 @@ const COLORS = [
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 
+export interface JoinRequest {
+    id: string
+    name: string
+}
+
 interface Session {
     ytext: Y.Text
     awareness: Awareness
@@ -38,9 +44,14 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
     const [session, setSession] = useState<Session | null>(null)
     const [status, setStatus] = useState<ConnectionStatus>('connecting')
     const [error, setError] = useState('')
+    const [waiting, setWaiting] = useState(false)
+    const [requests, setRequests] = useState<JoinRequest[]>([])
+    const socketRef = useRef<Socket | null>(null)
 
     useEffect(() => {
         setError('')
+        setWaiting(false)
+        setRequests([])
 
         const ydoc = new Y.Doc()
         const ytext = ydoc.getText('content')
@@ -53,6 +64,7 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
         })
 
         const socket = io(SOCKET_URL)
+        socketRef.current = socket
 
         const sendOwnAwareness = () =>
             socket.emit('awareness', docId, encodeAwarenessUpdate(awareness, [ydoc.clientID]))
@@ -77,6 +89,7 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
             socket.emit('join', {
                 docId,
                 clientId: ydoc.clientID,
+                name: userName,
                 token: localStorage.getItem('token') ?? undefined,
                 joinCode,
             })
@@ -85,7 +98,17 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
             setError(message)
             socket.disconnect()
         })
+        socket.on('waiting', () => setWaiting(true))
+        socket.on('declined', () => {
+            setWaiting(false)
+            setError('The owner declined your request to join.')
+            socket.disconnect()
+        })
+        socket.on('pending-requests', (reqDocId: string, list: JoinRequest[]) => {
+            if (reqDocId === docId) setRequests(list)
+        })
         socket.on('sync', (state: ArrayBuffer) => {
+            setWaiting(false)
             Y.applyUpdate(ydoc, new Uint8Array(state), 'remote')
             // push anything typed while offline, then announce ourselves
             socket.emit('update', docId, Y.encodeStateAsUpdate(ydoc))
@@ -108,6 +131,7 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
         return () => {
             ydoc.off('update', onDocUpdate)
             awareness.off('update', onAwarenessUpdate)
+            socketRef.current = null
             socket.disconnect()
             awareness.destroy()
             ydoc.destroy()
@@ -115,5 +139,12 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
         }
     }, [docId, userName, joinCode])
 
-    return { session, status, error }
+    const respond = useCallback(
+        (requestId: string, accept: boolean) => {
+            socketRef.current?.emit('respond-join', docId, requestId, accept)
+        },
+        [docId]
+    )
+
+    return { session, status, error, waiting, requests, respond }
 }

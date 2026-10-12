@@ -9,6 +9,8 @@ import MarkdownEditor from '../components/MarkdownEditor'
 import PresenceAvatars from '../components/PresenceAvatars'
 import DocTitle from '../components/DocTitle'
 import ShareDialog from '../components/ShareDialog'
+import JoinRequests from '../components/JoinRequests'
+
 
 const statusText = {
     connecting: 'Connecting...',
@@ -19,11 +21,12 @@ const statusText = {
 export default function Editor() {
     const { id = '' } = useParams()
     const { user } = useAuth()
-    const { session, status } = useCollabDoc(id, user?.name ?? 'Anonymous')
+    const { session, status, requests, respond } = useCollabDoc(id, user?.name ?? 'Anonymous')
     const users = usePresence(session?.awareness ?? null)
     const [doc, setDoc] = useState<Doc | null>(null)
     const [notFound, setNotFound] = useState(false)
     const [shareOpen, setShareOpen] = useState(false)
+    
 
     useEffect(() => {
         getDocument(id)
