@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+
 .cm-editor {
   height: 100%;
   font-size: 14px;
@@ -14,4 +15,92 @@
   opacity: 1 !important;
   font-family: inherit;
   padding: 1px 6px;
+}
+
+:root {
+  color-scheme: light dark;
+  --page: #f5f6f5;
+  --desk: #e7eae9;
+  --surface: #ffffff;
+  --line: #d4d9d8;
+  --ink: #1e2326;
+  --muted: #667075;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --danger: #b42318;
+  --danger-bg: #fef3f2;
+  --danger-line: #fda29b;
+  --note-ink: #2a2619;
+  --note-shadow: 0 1px 1px rgba(20, 24, 26, 0.06), 0 6px 14px -6px rgba(20, 24, 26, 0.22);
+  --butter: #fff3c6;
+  --butter-bar: #ffe8a0;
+  --mint: #d8f1e3;
+  --mint-bar: #bce6cf;
+  --sky: #d9ebfb;
+  --sky-bar: #bcd9f5;
+  --blush: #fbdde2;
+  --blush-bar: #f5c2cb;
+  --lilac: #e7e0fb;
+  --lilac-bar: #d4c9f4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #141618;
+    --desk: #1d2023;
+    --surface: #26292d;
+    --line: #373c40;
+    --ink: #eceeef;
+    --muted: #9aa2a7;
+    --accent: #5b52e8;
+    --accent-hover: #6c64f0;
+    --danger: #fda29b;
+    --danger-bg: #3a1a18;
+    --danger-line: #7a271a;
+    --note-ink: #f1eee4;
+    --note-shadow: 0 1px 1px rgba(0, 0, 0, 0.3), 0 6px 14px -6px rgba(0, 0, 0, 0.6);
+    --butter: #4a4222;
+    --butter-bar: #5c5229;
+    --mint: #23443a;
+    --mint-bar: #2c5646;
+    --sky: #243c57;
+    --sky-bar: #2d4c6d;
+    --blush: #4f2b33;
+    --blush-bar: #63363f;
+    --lilac: #3b3358;
+    --lilac-bar: #4a4070;
+  }
+}
+
+@theme inline {
+  --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  --color-page: var(--page);
+  --color-desk: var(--desk);
+  --color-surface: var(--surface);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-danger-line: var(--danger-line);
+  --color-note-ink: var(--note-ink);
+  --color-butter: var(--butter);
+  --color-butter-bar: var(--butter-bar);
+  --color-mint: var(--mint);
+  --color-mint-bar: var(--mint-bar);
+  --color-sky: var(--sky);
+  --color-sky-bar: var(--sky-bar);
+  --color-blush: var(--blush);
+  --color-blush-bar: var(--blush-bar);
+  --color-lilac: var(--lilac);
+  --color-lilac-bar: var(--lilac-bar);
+  --shadow-note: var(--note-shadow);
+}
+
+@layer base {
+  body {
+    @apply bg-page font-sans text-ink antialiased;
+  }
 }
