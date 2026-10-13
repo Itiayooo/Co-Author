@@ -2,6 +2,8 @@ import type * as Y from 'yjs'
 import { NOTE_COLORS } from './noteColors'
 import type { NoteColor } from './noteColors'
 
+export const DEFAULT_NOTE_COLOR: NoteColor = 'sky'
+
 export interface NoteMeta {
     id: string
     color: NoteColor
@@ -24,7 +26,8 @@ export function createNote(map: Y.Map<NoteMeta>, index: number): NoteMeta {
     const slot = index % 6
     const note: NoteMeta = {
         id: Math.random().toString(36).slice(2, 10),
-        color: NOTE_COLORS[index % NOTE_COLORS.length],
+        // color: NOTE_COLORS[index % NOTE_COLORS.length],
+        color: DEFAULT_NOTE_COLOR,
         x: 24 + slot * 28,
         y: 84 + slot * 26,
         createdAt: Date.now(),

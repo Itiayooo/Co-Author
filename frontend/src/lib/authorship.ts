@@ -1,5 +1,6 @@
 import { Extension } from '@tiptap/react'
 import { Plugin, PluginKey } from '@tiptap/pm/state'
+import type { Transaction } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
 import { ySyncPluginKey } from '@tiptap/y-tiptap'
 
@@ -9,14 +10,30 @@ const TYPES = ['paragraph', 'heading', 'bulletList', 'orderedList', 'blockquote'
 export interface AuthorshipOptions {
     name: string
     color: string
-    alwaysShow: boolean
+    onBlocked?: (author: string) => void
+}
+
+// changes that came from other people through Yjs
+const isRemote = (tr: Transaction) => !!tr.getMeta(ySyncPluginKey)?.isChangeOrigin
+
+// returns the author whose block this change would alter, or null if it is safe
+function foreignBlockChanged(tr: Transaction, me: string): string | null {
+    let blockedBy: string | null = null
+    tr.before.forEach((node, offset) => {
+        if (blockedBy) return
+        const author = node.attrs.authorName as string | null
+        if (!author || author === me) return
+        const kept = tr.doc.nodeAt(tr.mapping.map(offset, 1))
+        if (!kept || !kept.eq(node)) blockedBy = author
+    })
+    return blockedBy
 }
 
 export const Authorship = Extension.create<AuthorshipOptions>({
     name: 'authorship',
 
     addOptions() {
-        return { name: 'Guest', color: '#4f46e5', alwaysShow: false }
+        return { name: 'Guest', color: '#4f46e5', onBlocked: undefined }
     },
 
     addGlobalAttributes() {
@@ -33,7 +50,7 @@ export const Authorship = Extension.create<AuthorshipOptions>({
     },
 
     addProseMirrorPlugins() {
-        const { name, color, alwaysShow } = this.options
+        const { name, color, onBlocked } = this.options
 
         return [
             // 1. stamp new blocks with the local user
@@ -41,8 +58,7 @@ export const Authorship = Extension.create<AuthorshipOptions>({
                 key: new PluginKey('authorship-claim'),
                 appendTransaction(transactions, _oldState, newState) {
                     if (!transactions.some((tr) => tr.docChanged)) return null
-                    // ignore changes that came from other people
-                    if (transactions.some((tr) => tr.getMeta(ySyncPluginKey)?.isChangeOrigin)) return null
+                    if (transactions.some(isRemote)) return null
 
                     let tr = newState.tr
                     let changed = false
@@ -60,25 +76,34 @@ export const Authorship = Extension.create<AuthorshipOptions>({
                 },
             }),
 
-            // 2. draw the name label when the author changes
+            // 2. block local edits to other people's lines
+            new Plugin({
+                key: new PluginKey('authorship-guard'),
+                filterTransaction(tr) {
+                    if (!tr.docChanged || isRemote(tr)) return true
+                    const author = foreignBlockChanged(tr, name)
+                    if (author) {
+                        onBlocked?.(author)
+                        return false
+                    }
+                    return true
+                },
+            }),
+
+            // 3. draw a name tag when the author changes (empty lines get none)
             new Plugin({
                 key: new PluginKey('authorship-labels'),
                 props: {
                     decorations(state) {
-                        const authors = new Set<string>()
-                        state.doc.forEach((node) => {
-                            if (node.attrs.authorName) authors.add(node.attrs.authorName + node.attrs.authorColor)
-                        })
-                        if (!alwaysShow && authors.size < 2) return DecorationSet.empty
-
                         const decorations: Decoration[] = []
-                        let previous = ''
+                        let previous: string | null = null
+
                         state.doc.forEach((node, offset) => {
                             const author = node.attrs.authorName as string | null
-                            if (!author) return
-                            const color = (node.attrs.authorColor as string | null) ?? 'currentColor'
-                            const key = author + color
-                            if (key !== previous) {
+                            if (!author || !node.textContent.trim()) return
+
+                            if (author !== previous) {
+                                const dot = (node.attrs.authorColor as string | null) ?? 'currentColor'
                                 decorations.push(
                                     Decoration.widget(
                                         offset,
@@ -87,15 +112,16 @@ export const Authorship = Extension.create<AuthorshipOptions>({
                                             el.className = 'author-label'
                                             el.contentEditable = 'false'
                                             el.textContent = author
-                                            el.style.setProperty('--author', color)
+                                            el.style.setProperty('--author', dot)
                                             return el
                                         },
-                                        { side: -1, key: `author-${offset}-${key}` }
+                                        { side: -1, key: `author-${offset}-${author}-${dot}` }
                                     )
                                 )
                             }
-                            previous = key
+                            previous = author
                         })
+
                         return DecorationSet.create(state.doc, decorations)
                     },
                 },

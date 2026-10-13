@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { updateDocument, regenerateJoinCode } from '../lib/documents'
 import type { Doc } from '../types/document'
+import Button from './Button'
 
 interface Props {
     doc: Doc
@@ -11,13 +12,30 @@ interface Props {
 export default function ShareDialog({ doc, onClose, onChange }: Props) {
     const [copied, setCopied] = useState<'link' | 'code' | null>(null)
     const [error, setError] = useState('')
+    const closeRef = useRef<HTMLButtonElement>(null)
 
     const link = `${window.location.origin}/join/${doc.joinCode}`
 
+    useEffect(() => {
+        closeRef.current?.focus()
+    }, [])
+
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose()
+        }
+        document.addEventListener('keydown', onKey)
+        return () => document.removeEventListener('keydown', onKey)
+    }, [onClose])
+
     const copy = async (text: string, kind: 'link' | 'code') => {
-        await navigator.clipboard.writeText(text)
-        setCopied(kind)
-        setTimeout(() => setCopied(null), 1500)
+        try {
+            await navigator.clipboard.writeText(text)
+            setCopied(kind)
+            setTimeout(() => setCopied(null), 1500)
+        } catch {
+            setError('Could not copy. Select the text and copy it by hand.')
+        }
     }
 
     const setMode = async (joinMode: Doc['joinMode']) => {
@@ -41,81 +59,92 @@ export default function ShareDialog({ doc, onClose, onChange }: Props) {
 
     return (
         <div
-            className="fixed inset-0 z-10 flex items-center justify-center bg-black/30 px-4"
+            className="fixed inset-0 z-[3000] grid place-items-center bg-black/40 px-4"
             onClick={onClose}
         >
             <div
-                className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="share-title"
                 onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md rounded-xl border border-line bg-surface p-6 text-ink shadow-note"
             >
                 <div className="mb-4 flex items-center justify-between">
-                    <h2 className="font-medium">Share document</h2>
-                    <button onClick={onClose} className="text-sm text-gray-500 hover:text-gray-900">
+                    <h2 id="share-title" className="text-lg font-bold">
+                        Share board
+                    </h2>
+                    <button
+                        ref={closeRef}
+                        onClick={onClose}
+                        className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-desk hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+                    >
                         Close
                     </button>
                 </div>
 
-                {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+                {error && (
+                    <p
+                        role="alert"
+                        className="mb-3 rounded-lg border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger"
+                    >
+                        {error}
+                    </p>
+                )}
 
-                <p className="mb-1 text-sm text-gray-700">Join link</p>
+                <p className="mb-1 text-sm font-medium">Join link</p>
                 <div className="mb-4 flex gap-2">
                     <input
                         readOnly
                         value={link}
-                        className="min-w-0 flex-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm"
+                        aria-label="Join link"
+                        className="min-w-0 flex-1 rounded-lg border border-line bg-desk px-3 py-2 text-sm"
                     />
-                    <button
-                        onClick={() => copy(link, 'link')}
-                        className="rounded bg-indigo-600 px-3 py-2 text-sm text-white hover:bg-indigo-700"
-                    >
-                        {copied === 'link' ? 'Copied' : 'Copy'}
-                    </button>
+                    <Button onClick={() => copy(link, 'link')}>{copied === 'link' ? 'Copied' : 'Copy'}</Button>
                 </div>
 
-                <p className="mb-1 text-sm text-gray-700">Join code</p>
-                <div className="mb-4 flex items-center gap-2">
-                    <span className="rounded border border-gray-300 bg-gray-50 px-3 py-2 font-mono text-sm tracking-widest">
+                <p className="mb-1 text-sm font-medium">Join code</p>
+                <div className="mb-5 flex items-center gap-3">
+                    <span className="rounded-lg border border-line bg-desk px-3 py-2 font-mono text-sm tracking-widest">
                         {doc.joinCode}
                     </span>
                     <button
                         onClick={() => copy(doc.joinCode, 'code')}
-                        className="text-sm text-indigo-600 hover:underline"
+                        className="text-sm font-medium text-accent hover:underline"
                     >
                         {copied === 'code' ? 'Copied' : 'Copy'}
                     </button>
-                    <button
-                        onClick={regenerate}
-                        className="ml-auto text-sm text-gray-500 hover:text-gray-900"
-                    >
+                    <button onClick={regenerate} className="ml-auto text-sm text-muted hover:text-ink">
                         New code
                     </button>
                 </div>
 
-                <p className="mb-2 text-sm text-gray-700">When guests join</p>
-                <div className="space-y-2 text-sm">
+                <p className="mb-2 text-sm font-medium">When guests join</p>
+                <div className="space-y-3 text-sm">
                     <label className="flex items-start gap-2">
                         <input
                             type="radio"
+                            name="joinMode"
                             checked={doc.joinMode === 'open'}
                             onChange={() => setMode('open')}
-                            className="mt-1"
+                            className="mt-1 accent-accent"
                         />
                         <span>
                             Let them in right away
-                            <span className="block text-xs text-gray-500">Anyone with the code can edit.</span>
+                            <span className="block text-xs text-muted">Anyone with the code can edit.</span>
                         </span>
                     </label>
                     <label className="flex items-start gap-2">
                         <input
                             type="radio"
+                            name="joinMode"
                             checked={doc.joinMode === 'approval'}
                             onChange={() => setMode('approval')}
-                            className="mt-1"
+                            className="mt-1 accent-accent"
                         />
                         <span>
                             I approve each guest
-                            <span className="block text-xs text-gray-500">
-                                You get a prompt while the document is open.
+                            <span className="block text-xs text-muted">
+                                You get a prompt while the board is open.
                             </span>
                         </span>
                     </label>

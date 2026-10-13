@@ -6,6 +6,8 @@ import NoteWindow from './NoteWindow'
 import PresenceAvatars from './PresenceAvatars'
 import Button from './Button'
 import Icon from './Icon'
+import PhoneBoard from './PhoneBoard'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useBoardNotes } from '../hooks/useBoardNotes'
 import { useInert } from '../hooks/useInert'
 import type { ConnectionStatus } from '../hooks/useCollabDoc'
@@ -22,7 +24,7 @@ import {
 import type { NoteMeta } from '../lib/board'
 import type { NoteColor } from '../lib/noteColors'
 
-interface Props {
+export interface BoardProps {
     ydoc: Y.Doc
     awareness: Awareness
     status: ConnectionStatus
@@ -40,7 +42,7 @@ const Divider = () => <span className="mx-1 h-5 w-px bg-line" aria-hidden="true"
 const dockButton =
     'grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-desk hover:text-ink focus-visible:outline-2 focus-visible:outline-accent'
 
-export default function Board({
+function DeskBoard({
     ydoc,
     awareness,
     status,
@@ -49,7 +51,7 @@ export default function Board({
     selfId,
     brand,
     actions,
-}: Props) {
+}: BoardProps) {
     const notes = useBoardNotes(ydoc)
     const deskRef = useRef<HTMLDivElement>(null)
     const dockRef = useRef<HTMLDivElement>(null)
@@ -171,23 +173,15 @@ export default function Board({
                     title="When on, moving a note moves it on everyone's screen"
                     className="flex h-8 items-center gap-2 rounded-lg px-2 text-xs font-medium hover:bg-desk focus-visible:outline-2 focus-visible:outline-accent"
                 >
-                    <span
-                        className={`relative h-4 w-7 rounded-full transition-colors ${sync ? 'bg-accent' : 'bg-line'
-                            }`}
-                    >
-                        <span
-                            className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${sync ? 'translate-x-3' : ''
-                                }`}
-                        />
+                    <span className={`relative h-4 w-7 rounded-full transition-colors ${sync ? 'bg-accent' : 'bg-line'}`}>
+                        <span className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${sync ? 'translate-x-3' : ''}`} />
                     </span>
                     <span className="hidden sm:inline">Move together</span>
                 </button>
                 <Divider />
                 <PresenceAvatars users={users} selfId={selfId} />
                 <span role="status" className="mx-1 flex items-center gap-1.5 text-xs text-muted">
-                    <span
-                        className={`h-2 w-2 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-muted'}`}
-                    />
+                    <span className={`h-2 w-2 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-muted'}`} />
                     <span className="hidden sm:inline">
                         {status === 'connected' ? 'Live' : status === 'connecting' ? 'Connecting' : 'Offline'}
                     </span>
@@ -250,4 +244,9 @@ export default function Board({
             ))}
         </div>
     )
+}
+
+export default function Board(props: BoardProps) {
+    const phone = useMediaQuery('(max-width: 639px)')
+    return phone ? <PhoneBoard {...props} /> : <DeskBoard {...props} />
 }

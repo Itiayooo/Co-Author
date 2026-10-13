@@ -1,4 +1,5 @@
 import type { JoinRequest } from '../hooks/useCollabDoc'
+import Button from './Button'
 
 interface Props {
     requests: JoinRequest[]
@@ -6,25 +7,23 @@ interface Props {
 }
 
 export default function JoinRequests({ requests, onRespond }: Props) {
-    if (requests.length === 0) return null
-
     return (
-        <div className="fixed right-4 top-14 z-10 w-72 space-y-2">
+        <div aria-live="polite" className="fixed right-4 top-4 z-[2000] w-72 space-y-2">
             {requests.map((req) => (
-                <div key={req.id} className="rounded-lg border border-gray-200 bg-white p-3 text-sm shadow-sm">
-                    <p className="mb-2">
-                        <span className="font-medium">{req.name}</span> wants to join
+                <div
+                    key={req.id}
+                    className="rounded-xl border border-line bg-surface p-3 text-sm text-ink shadow-note"
+                >
+                    <p className="mb-3">
+                        <span className="font-semibold">{req.name}</span> wants to join
                     </p>
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => onRespond(req.id, true)}
-                            className="rounded bg-indigo-600 px-3 py-1 text-white hover:bg-indigo-700"
-                        >
+                        <Button onClick={() => onRespond(req.id, true)} className="px-3 py-1.5">
                             Accept
-                        </button>
+                        </Button>
                         <button
                             onClick={() => onRespond(req.id, false)}
-                            className="rounded border border-gray-300 px-3 py-1 text-gray-700 hover:bg-gray-50"
+                            className="rounded-lg border border-line px-3 py-1.5 font-medium hover:bg-desk focus-visible:outline-2 focus-visible:outline-accent"
                         >
                             Decline
                         </button>
