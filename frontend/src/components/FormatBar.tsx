@@ -1,23 +1,6 @@
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/react'
-
-function Icon({ d }: { d: string }) {
-    return (
-        <svg
-            viewBox="0 0 24 24"
-            width="16"
-            height="16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-        >
-            <path d={d} />
-        </svg>
-    )
-}
+import Icon from './Icon'
 
 export default function FormatBar({ editor }: { editor: Editor }) {
     const active = useEditorState({
@@ -68,7 +51,7 @@ export default function FormatBar({ editor }: { editor: Editor }) {
         <div
             role="toolbar"
             aria-label="Formatting"
-            className="flex items-center gap-1 border-t border-line bg-surface px-3 py-1.5"
+            className="flex items-center gap-1 px-2 pb-1.5 pt-0.5"
         >
             {buttons.map((b) => (
                 <button
@@ -78,7 +61,7 @@ export default function FormatBar({ editor }: { editor: Editor }) {
                     aria-pressed={b.on}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={b.run}
-                    className={`grid h-8 w-8 place-items-center rounded-md hover:bg-desk focus-visible:outline-2 focus-visible:outline-accent ${b.on ? 'bg-accent/15 text-accent' : 'text-muted hover:text-ink'
+                    className={`grid h-8 w-8 place-items-center rounded-md hover:bg-current/10 focus-visible:outline-2 focus-visible:outline-accent ${b.on ? 'bg-current/15 opacity-100' : 'opacity-70 hover:opacity-100'
                         }`}
                 >
                     <Icon d={b.d} />

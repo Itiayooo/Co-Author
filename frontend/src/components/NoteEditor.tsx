@@ -9,16 +9,17 @@ import FormatBar from './FormatBar'
 interface Props {
     ydoc: Y.Doc
     awareness: Awareness
+    field: string
 }
 
-export default function NoteEditor({ ydoc, awareness }: Props) {
+export default function NoteEditor({ ydoc, awareness, field }: Props) {
     const user = awareness.getLocalState()?.user as { name: string; color: string } | undefined
 
     const editor = useEditor(
         {
             extensions: [
                 StarterKit.configure({ undoRedo: false }),
-                Collaboration.configure({ document: ydoc, field: 'note-main' }),
+                Collaboration.configure({ document: ydoc, field }),
                 CollaborationCaret.configure({
                     provider: { awareness },
                     user: { name: user?.name ?? 'Guest', color: user?.color ?? '#4f46e5' },
@@ -28,15 +29,19 @@ export default function NoteEditor({ ydoc, awareness }: Props) {
                 attributes: { class: 'note-editor', 'aria-label': 'Note text' },
             },
         },
-        [ydoc, awareness]
+        [ydoc, awareness, field]
     )
 
     if (!editor) return null
 
     return (
-        <div className="flex h-full flex-col">
-            <EditorContent editor={editor} className="min-h-0 flex-1 overflow-auto" />
-            <FormatBar editor={editor} />
-        </div>
+        <>
+            <div className="max-h-56 min-h-24 overflow-auto">
+                <EditorContent editor={editor} />
+            </div>
+            <div className="max-h-0 overflow-hidden transition-[max-height] duration-200 group-focus-within:max-h-12">
+                <FormatBar editor={editor} />
+            </div>
+        </>
     )
 }
