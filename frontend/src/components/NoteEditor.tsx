@@ -5,6 +5,7 @@ import CollaborationCaret from '@tiptap/extension-collaboration-caret'
 import type * as Y from 'yjs'
 import type { Awareness } from 'y-protocols/awareness'
 import FormatBar from './FormatBar'
+import { Authorship } from '../lib/authorship'
 
 interface Props {
     ydoc: Y.Doc
@@ -14,16 +15,16 @@ interface Props {
 
 export default function NoteEditor({ ydoc, awareness, field }: Props) {
     const user = awareness.getLocalState()?.user as { name: string; color: string } | undefined
+    const name = user?.name ?? 'Guest'
+    const color = user?.color ?? '#4f46e5'
 
     const editor = useEditor(
         {
             extensions: [
                 StarterKit.configure({ undoRedo: false }),
                 Collaboration.configure({ document: ydoc, field }),
-                CollaborationCaret.configure({
-                    provider: { awareness },
-                    user: { name: user?.name ?? 'Guest', color: user?.color ?? '#4f46e5' },
-                }),
+                CollaborationCaret.configure({ provider: { awareness }, user: { name, color } }),
+                Authorship.configure({ name, color, alwaysShow: false }),
             ],
             editorProps: {
                 attributes: { class: 'note-editor', 'aria-label': 'Note text' },
