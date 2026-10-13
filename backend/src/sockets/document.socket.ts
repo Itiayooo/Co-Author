@@ -13,6 +13,7 @@ const saveTimers = new Map<string, NodeJS.Timeout>()
 interface PendingGuest {
     name: string
     clientId: number
+    key: string
 }
 const pendingGuests = new Map<string, Map<string, PendingGuest>>()
 
@@ -22,9 +23,17 @@ interface JoinPayload {
     name?: string
     token?: string
     joinCode?: string
+    guestKey?: string
 }
 
 type Access = 'owner' | 'allowed' | 'approval' | 'denied'
+
+interface AccessResult {
+    access: Access
+    key: string
+}
+
+const cleanName = (raw?: string) => (raw ?? '').trim().slice(0, 40)
 
 async function saveNow(id: string, ydoc: Y.Doc) {
     clearTimeout(saveTimers.get(id))
@@ -71,24 +80,62 @@ async function unloadIfEmpty(io: Server, id: string) {
     if (!io.sockets.adapter.rooms.get(id)?.size) docs.delete(id)
 }
 
-async function checkAccess({ docId, token, joinCode }: JoinPayload): Promise<Access> {
-    if (!isValidObjectId(docId)) return 'denied'
+// Works out who is joining. `key` is a stable id for the person:
+// their account id if logged in, otherwise a random id kept in their browser.
+async function checkAccess(
+    { docId, token, joinCode, guestKey }: JoinPayload,
+    socketId: string
+): Promise<AccessResult> {
+    let key = `guest:${(guestKey ?? '').slice(0, 64) || socketId}`
+
+    if (!isValidObjectId(docId)) return { access: 'denied', key }
     const record = await Document.findById(docId).select('owner joinCode joinMode')
-    if (!record) return 'denied'
+    if (!record) return { access: 'denied', key }
 
     if (token) {
         try {
             const payload = jwt.verify(token, process.env.JWT_SECRET as string) as { id: string }
-            if (record.owner.toString() === payload.id) return 'owner'
+            key = `user:${payload.id}`
+            if (record.owner.toString() === payload.id) return { access: 'owner', key }
         } catch {
-            // bad token, fall through to the join code check
+            // bad token, treat as a guest
         }
     }
 
     if (joinCode && joinCode === record.joinCode) {
-        return record.joinMode === 'open' ? 'allowed' : 'approval'
+        return { access: record.joinMode === 'open' ? 'allowed' : 'approval', key }
     }
-    return 'denied'
+    return { access: 'denied', key }
+}
+
+// true if nobody else has claimed this name on this board
+async function nameIsFree(docId: string, key: string, name: string) {
+    const taken = await Document.exists({
+        _id: docId,
+        participants: { $elemMatch: { name: name.toLowerCase(), key: { $ne: key } } },
+    })
+    return !taken
+}
+
+// first person to use a name on a board keeps it. The owner always keeps theirs.
+async function claimName(docId: string, key: string, name: string, isOwner: boolean) {
+    const lower = name.toLowerCase()
+
+    if (isOwner) {
+        await Document.updateOne(
+            { _id: docId },
+            { $pull: { participants: { name: lower, key: { $ne: key } } } }
+        )
+    }
+
+    const pushed = await Document.findOneAndUpdate(
+        { _id: docId, 'participants.name': { $ne: lower } },
+        { $push: { participants: { key, name: lower, label: name } } }
+    )
+    if (pushed) return true
+
+    // the name already exists, so it is only ok if it is already mine
+    return nameIsFree(docId, key, name)
 }
 
 function broadcastPending(io: Server, docId: string) {
@@ -120,22 +167,32 @@ export function registerDocumentSocket(io: Server) {
         socket.on('join', async (payload: JoinPayload) => {
             const { docId, clientId } = payload
 
-            const access = await checkAccess(payload)
+            const { access, key } = await checkAccess(payload, socket.id)
             if (access === 'denied') {
                 socket.emit('doc-error', 'You do not have access to this document')
                 return
             }
 
+            const name = cleanName(payload.name) || 'Guest'
+
             if (access === 'approval') {
-                const name = (payload.name || 'Guest').slice(0, 30)
+                if (!(await nameIsFree(docId, key, name))) {
+                    socket.emit('name-taken')
+                    return
+                }
                 let guests = pendingGuests.get(docId)
                 if (!guests) {
                     guests = new Map()
                     pendingGuests.set(docId, guests)
                 }
-                guests.set(socket.id, { name, clientId })
+                guests.set(socket.id, { name, clientId, key })
                 socket.emit('waiting')
                 broadcastPending(io, docId)
+                return
+            }
+
+            if (!(await claimName(docId, key, name, access === 'owner'))) {
+                socket.emit('name-taken')
                 return
             }
 
@@ -162,11 +219,15 @@ export function registerDocumentSocket(io: Server) {
             const target = io.sockets.sockets.get(requestId)
             if (!target) return
 
-            if (accept) {
-                await admit(target, docId, guest.clientId)
-            } else {
+            if (!accept) {
                 target.emit('declined')
+                return
             }
+            if (!(await claimName(docId, guest.key, guest.name, false))) {
+                target.emit('name-taken')
+                return
+            }
+            await admit(target, docId, guest.clientId)
         })
 
         socket.on('update', async (docId: string, update: Uint8Array) => {
