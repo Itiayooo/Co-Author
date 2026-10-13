@@ -1,23 +1,18 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getDocuments, createDocument, deleteDocument } from '../lib/documents'
 import type { Doc } from '../types/document'
-
-const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-    })
+import AppHeader from '../components/AppHeader'
+import BoardCard from '../components/BoardCard'
+import Button from '../components/Button'
 
 export default function Dashboard() {
-    const { user, logout } = useAuth()
     const navigate = useNavigate()
     const [docs, setDocs] = useState<Doc[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
     const [creating, setCreating] = useState(false)
+    const [query, setQuery] = useState('')
 
     useEffect(() => {
         getDocuments()
@@ -26,80 +21,76 @@ export default function Dashboard() {
             .finally(() => setLoading(false))
     }, [])
 
+    const visible = useMemo(() => {
+        const q = query.trim().toLowerCase()
+        return q ? docs.filter((d) => d.title.toLowerCase().includes(q)) : docs
+    }, [docs, query])
+
     const handleCreate = async () => {
         setCreating(true)
         try {
             const doc = await createDocument()
             navigate(`/doc/${doc.id}`)
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Could not create document')
+            setError(err instanceof Error ? err.message : 'Could not create board')
             setCreating(false)
         }
     }
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Delete this document? This cannot be undone.')) return
+        if (!window.confirm('Delete this board? This cannot be undone.')) return
         try {
             await deleteDocument(id)
             setDocs((prev) => prev.filter((d) => d.id !== id))
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Could not delete document')
+            setError(err instanceof Error ? err.message : 'Could not delete board')
         }
     }
 
     return (
-        <div className="min-h-screen bg-white text-gray-900">
-            <header className="flex items-center justify-between border-b border-gray-200 px-6 py-3">
-                <span className="font-medium">Coauthor</span>
-                <div className="flex items-center gap-4 text-sm">
-                    <span className="text-gray-500">{user?.name}</span>
-                    <button onClick={logout} className="text-indigo-600 hover:underline">
-                        Log out
-                    </button>
-                </div>
-            </header>
+        <div className="min-h-screen bg-desk">
+            <AppHeader />
 
-            <main className="mx-auto max-w-3xl px-6 py-8">
-                <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-xl font-medium">Your documents</h1>
-                    <button
-                        onClick={handleCreate}
-                        disabled={creating}
-                        className="rounded bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60"
-                    >
-                        {creating ? 'Creating...' : 'New document'}
-                    </button>
+            <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+                <div className="mb-6 flex flex-wrap items-center gap-3">
+                    <h1 className="mr-auto text-2xl font-bold tracking-tight">Your boards</h1>
+                    <input
+                        type="search"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Search boards"
+                        aria-label="Search boards"
+                        className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm outline-none placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/30 sm:w-56"
+                    />
+                    <Button onClick={handleCreate} disabled={creating}>
+                        {creating ? 'Creating...' : 'New board'}
+                    </Button>
                 </div>
 
                 {error && (
-                    <p className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    <p
+                        role="alert"
+                        className="mb-4 rounded-lg border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger"
+                    >
                         {error}
                     </p>
                 )}
 
                 {loading ? (
-                    <p className="text-sm text-gray-500">Loading...</p>
+                    <p className="text-sm text-muted">Loading...</p>
                 ) : docs.length === 0 ? (
-                    <div className="rounded border border-dashed border-gray-300 py-12 text-center text-sm text-gray-500">
-                        No documents yet. Create one to get started.
+                    <div className="rounded-xl border border-dashed border-line px-6 py-14 text-center">
+                        <p className="font-medium">No boards yet</p>
+                        <p className="mt-1 text-sm text-muted">
+                            Create one and share its code with friends.
+                        </p>
                     </div>
+                ) : visible.length === 0 ? (
+                    <p className="text-sm text-muted">No boards match your search.</p>
                 ) : (
-                    <ul className="divide-y divide-gray-200 rounded border border-gray-200">
-                        {docs.map((doc) => (
-                            <li key={doc.id} className="flex items-center justify-between px-4 py-3">
-                                <Link to={`/doc/${doc.id}`} className="min-w-0 flex-1">
-                                    <p className="truncate font-medium hover:text-indigo-600">{doc.title}</p>
-                                    <p className="text-xs text-gray-500">
-                                        Edited {formatDate(doc.updatedAt)} · Code {doc.joinCode}
-                                    </p>
-                                </Link>
-                                <button
-                                    onClick={() => handleDelete(doc.id)}
-                                    className="ml-4 text-sm text-gray-400 hover:text-red-600"
-                                >
-                                    Delete
-                                </button>
-                            </li>
+                    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {visible.map((doc) => (
+                            <BoardCard key={doc.id} doc={doc} onDelete={handleDelete} />
                         ))}
                     </ul>
                 )}
