@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { getDocumentByCode } from '../lib/documents'
 import { useCollabDoc } from '../hooks/useCollabDoc'
 import { usePresence } from '../hooks/usePresence'
-import EditorSplit from '../components/EditorSplit'
+// import EditorSplit from '../components/EditorSplit'
 import PresenceAvatars from '../components/PresenceAvatars'
 
 
