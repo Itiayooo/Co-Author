@@ -32,10 +32,11 @@ export default function Login() {
         <AuthShell
             title="Welcome back"
             subtitle="Log in to your boards."
+            art="login"
             footer={
                 <>
                     New here?{' '}
-                    <Link to="/register" className="font-semibold underline">
+                    <Link to="/register" className="font-semibold text-ink hover:underline">
                         Create an account
                     </Link>
                 </>

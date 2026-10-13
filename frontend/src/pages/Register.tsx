@@ -33,10 +33,11 @@ export default function Register() {
         <AuthShell
             title="Create your account"
             subtitle="Start a board and share its code with friends."
+            art="register"
             footer={
                 <>
                     Already have an account?{' '}
-                    <Link to="/login" className="font-semibold underline">
+                    <Link to="/login" className="font-semibold text-ink hover:underline">
                         Log in
                     </Link>
                 </>

@@ -104,6 +104,7 @@ export default function Join() {
             <AuthShell
                 title={`Join "${info.title}"`}
                 subtitle="Pick a name others will see."
+                art="join"
                 footer="No account needed."
             >
                 <form onSubmit={handleJoin}>
