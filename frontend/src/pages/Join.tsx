@@ -9,17 +9,23 @@ import Board from '../components/Board'
 import AuthShell from '../components/AuthShell'
 import TextField from '../components/TextField'
 import Button from '../components/Button'
+import { LogoMark } from '../components/Logo'
 
 interface RoomProps {
     docId: string
     title: string
     name: string
     code: string
+    onNameTaken: () => void
 }
 
-function GuestRoom({ docId, title, name, code }: RoomProps) {
-    const { session, status, error, waiting, synced } = useCollabDoc(docId, name, code)
+function GuestRoom({ docId, title, name, code, onNameTaken }: RoomProps) {
+    const { session, status, error, waiting, synced, nameTaken } = useCollabDoc(docId, name, code)
     const users = usePresence(session?.awareness ?? null)
+
+    useEffect(() => {
+        if (nameTaken) onNameTaken()
+    }, [nameTaken, onNameTaken])
 
     if (error) {
         return <div className="p-8 text-sm text-muted">{error}</div>
@@ -49,11 +55,8 @@ function GuestRoom({ docId, title, name, code }: RoomProps) {
                     selfId={session.awareness.clientID}
                     brand={
                         <>
-                            <span
-                                aria-hidden="true"
-                                className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-sm font-bold text-white"
-                            >
-                                C
+                            <span className="grid h-8 w-8 place-items-center">
+                                <LogoMark />
                             </span>
                             <span className="max-w-40 truncate px-2 text-sm font-semibold">{title}</span>
                         </>
@@ -70,6 +73,7 @@ export default function Join() {
     const [info, setInfo] = useState<{ id: string; title: string } | null>(null)
     const [notFound, setNotFound] = useState(false)
     const [name, setName] = useState(() => localStorage.getItem('guestName') ?? '')
+    const [nameError, setNameError] = useState('')
     const [joined, setJoined] = useState(false)
 
     useEffect(() => {
@@ -86,6 +90,7 @@ export default function Join() {
         e.preventDefault()
         if (!name.trim()) return
         localStorage.setItem('guestName', name.trim())
+        setNameError('')
         setJoined(true)
     }
 
@@ -102,6 +107,14 @@ export default function Join() {
                 footer="No account needed."
             >
                 <form onSubmit={handleJoin}>
+                    {nameError && (
+                        <p
+                            role="alert"
+                            className="mb-4 rounded-lg border border-danger-line bg-danger-bg px-3 py-2 text-sm text-danger"
+                        >
+                            {nameError}
+                        </p>
+                    )}
                     <TextField
                         label="Your name"
                         autoFocus
@@ -120,6 +133,15 @@ export default function Join() {
     }
 
     return (
-        <GuestRoom docId={info.id} title={info.title} name={name.trim()} code={code.toUpperCase()} />
+        <GuestRoom
+            docId={info.id}
+            title={info.title}
+            name={name.trim()}
+            code={code.toUpperCase()}
+            onNameTaken={() => {
+                setNameError('Someone already uses that name on this board. Pick another.')
+                setJoined(false)
+            }}
+        />
     )
 }

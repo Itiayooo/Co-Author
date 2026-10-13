@@ -174,7 +174,7 @@ function DeskBoard({
                     className="flex h-8 items-center gap-2 rounded-lg px-2 text-xs font-medium hover:bg-desk focus-visible:outline-2 focus-visible:outline-accent"
                 >
                     <span className={`relative h-4 w-7 rounded-full transition-colors ${sync ? 'bg-accent' : 'bg-line'}`}>
-                        <span className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-white transition-transform ${sync ? 'translate-x-3' : ''}`} />
+                        <span className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-page transition-transform ${sync ? 'translate-x-3' : ''}`} />
                     </span>
                     <span className="hidden sm:inline">Move together</span>
                 </button>
@@ -203,7 +203,7 @@ function DeskBoard({
                 type="button"
                 aria-label="Open board"
                 onClick={() => setMinimized(false)}
-                className={`absolute left-3 top-3 z-[1000] grid h-11 w-11 place-items-center rounded-full bg-accent font-bold text-white shadow-note transition duration-200 ${minimized ? '' : 'pointer-events-none scale-50 opacity-0'
+                className={`absolute left-3 top-3 z-[1000] grid h-11 w-11 place-items-center rounded-full bg-accent font-bold text-accent-ink shadow-note transition duration-200 ${minimized ? '' : 'pointer-events-none scale-50 opacity-0'
                     }`}
             >
                 C

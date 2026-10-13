@@ -1,79 +1,77 @@
-@import "tailwindcss";
-/* @plugin "@tailwindcss/typography"; */
-
-
-.cm-editor {
-  height: 100%;
-  font-size: 14px;
-}
-
-.cm-editor.cm-focused {
-  outline: none;
-}
-
-.cm-ySelectionInfo {
-  opacity: 1 !important;
-  font-family: inherit;
-  padding: 1px 6px;
-}
+@import 'tailwindcss';
 
 :root {
   color-scheme: light dark;
-  --page: #f5f6f5;
-  --desk: #e7eae9;
+  --page: #ffffff;
+  --desk: #f5f5f6;
   --surface: #ffffff;
-  --line: #d4d9d8;
-  --ink: #1e2326;
-  --muted: #667075;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
+  --line: #e9e9eb;
+  --ink: #000000;
+  --muted: #6b6b72;
+  --accent: #000000;
+  --accent-hover: #222226;
+  --accent-ink: #ffffff;
+  --inv-bg: #000000;
+  --inv-ink: #ffffff;
+  --inv-btn: #ffffff;
+  --inv-btn-ink: #000000;
+  --dot: #dcdcdf;
+  --navbg: rgba(255, 255, 255, 0.78);
   --danger: #b42318;
   --danger-bg: #fef3f2;
   --danger-line: #fda29b;
-  --note-ink: #2a2619;
-  --note-shadow: 0 1px 1px rgba(20, 24, 26, 0.06), 0 6px 14px -6px rgba(20, 24, 26, 0.22);
-  --butter: #fff3c6;
-  --butter-bar: #ffe8a0;
-  --mint: #d8f1e3;
-  --mint-bar: #bce6cf;
-  --sky: #d9ebfb;
-  --sky-bar: #bcd9f5;
-  --blush: #fbdde2;
-  --blush-bar: #f5c2cb;
-  --lilac: #e7e0fb;
-  --lilac-bar: #d4c9f4;
+  --note-ink: #1f1d16;
+  --note-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 10px 24px -12px rgba(0, 0, 0, 0.28);
+  --butter: #fbf1c9;
+  --butter-bar: #f3e5a8;
+  --mint: #dff1e6;
+  --mint-bar: #cbe6d6;
+  --sky: #deebf8;
+  --sky-bar: #caddf1;
+  --blush: #f9e0e2;
+  --blush-bar: #efcacd;
+  --lilac: #e8e3f7;
+  --lilac-bar: #d6ceef;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --page: #141618;
-    --desk: #1d2023;
-    --surface: #26292d;
-    --line: #373c40;
-    --ink: #eceeef;
-    --muted: #9aa2a7;
-    --accent: #5b52e8;
-    --accent-hover: #6c64f0;
+    --page: #000000;
+    --desk: #0a0a0b;
+    --surface: #0f0f10;
+    --line: #1c1c1e;
+    --ink: #ffffff;
+    --muted: #8e8e96;
+    --accent: #ffffff;
+    --accent-hover: #d9d9dd;
+    --accent-ink: #000000;
+    --inv-bg: #ffffff;
+    --inv-ink: #000000;
+    --inv-btn: #000000;
+    --inv-btn-ink: #ffffff;
+    --dot: #1e1e21;
+    --navbg: rgba(0, 0, 0, 0.72);
     --danger: #fda29b;
     --danger-bg: #3a1a18;
     --danger-line: #7a271a;
-    --note-ink: #f1eee4;
-    --note-shadow: 0 1px 1px rgba(0, 0, 0, 0.3), 0 6px 14px -6px rgba(0, 0, 0, 0.6);
-    --butter: #4a4222;
-    --butter-bar: #5c5229;
-    --mint: #23443a;
-    --mint-bar: #2c5646;
-    --sky: #243c57;
-    --sky-bar: #2d4c6d;
-    --blush: #4f2b33;
-    --blush-bar: #63363f;
-    --lilac: #3b3358;
-    --lilac-bar: #4a4070;
+    --note-ink: #f4f1e8;
+    --note-shadow: 0 1px 0 rgba(255, 255, 255, 0.04), 0 12px 28px -12px rgba(0, 0, 0, 0.9);
+    --butter: #3f3a20;
+    --butter-bar: #4c4627;
+    --mint: #1f3d31;
+    --mint-bar: #274b3c;
+    --sky: #203650;
+    --sky-bar: #294660;
+    --blush: #46262d;
+    --blush-bar: #573138;
+    --lilac: #332c50;
+    --lilac-bar: #403962;
   }
 }
 
 @theme inline {
   --font-sans: 'Figtree Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
   --color-page: var(--page);
   --color-desk: var(--desk);
   --color-surface: var(--surface);
@@ -82,6 +80,12 @@
   --color-muted: var(--muted);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-inv-bg: var(--inv-bg);
+  --color-inv-ink: var(--inv-ink);
+  --color-inv-btn: var(--inv-btn);
+  --color-inv-btn-ink: var(--inv-btn-ink);
+  --color-navbg: var(--navbg);
   --color-danger: var(--danger);
   --color-danger-bg: var(--danger-bg);
   --color-danger-line: var(--danger-line);
@@ -198,17 +202,20 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-family: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   line-height: 1.4;
-  opacity: 0.7;
+  opacity: 0.72;
   user-select: none;
 }
 
 .author-label::before {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--author);
 }
@@ -225,4 +232,32 @@
   padding: 20px;
   font-size: 17px;
   line-height: 1.55;
+}
+
+.dot-grid {
+  background-color: var(--desk);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 1px;
+  vertical-align: -0.15em;
+  background: var(--c);
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret {
+    animation: none;
+  }
 }

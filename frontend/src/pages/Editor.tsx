@@ -9,6 +9,8 @@ import Board from '../components/Board'
 import DocTitle from '../components/DocTitle'
 import ShareDialog from '../components/ShareDialog'
 import JoinRequests from '../components/JoinRequests'
+import { LogoMark } from '../components/Logo'
+import { buttonClass } from '../components/Button'
 
 export default function Editor() {
     const { id = '' } = useParams()
@@ -53,21 +55,14 @@ export default function Editor() {
                     selfId={session.awareness.clientID}
                     brand={
                         <>
-                            <Link
-                                to="/"
-                                aria-label="Back to boards"
-                                className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-sm font-bold text-white"
-                            >
-                                C
+                            <Link to="/" aria-label="Back to boards" className="grid h-8 w-8 place-items-center">
+                                <LogoMark />
                             </Link>
                             {doc && <DocTitle value={doc.title} onSave={saveTitle} />}
                         </>
                     }
                     actions={
-                        <button
-                            onClick={() => setShareOpen(true)}
-                            className="ml-1 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                        >
+                        <button onClick={() => setShareOpen(true)} className={buttonClass('primary', 'sm', 'ml-1')}>
                             Share
                         </button>
                     }

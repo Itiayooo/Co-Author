@@ -18,7 +18,7 @@ export default function JoinRequests({ requests, onRespond }: Props) {
                         <span className="font-semibold">{req.name}</span> wants to join
                     </p>
                     <div className="flex gap-2">
-                        <Button onClick={() => onRespond(req.id, true)} className="px-3 py-1.5">
+                        <Button onClick={() => onRespond(req.id, true)} size='sm'>
                             Accept
                         </Button>
                         <button

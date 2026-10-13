@@ -123,7 +123,7 @@ export default function PhoneBoard({
             <button
                 onClick={addNote}
                 aria-label="New note"
-                className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 grid h-14 w-14 place-items-center rounded-2xl bg-accent text-white shadow-note hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="absolute bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-5 grid h-14 w-14 place-items-center rounded-2xl bg-accent text-accent-ink shadow-note hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
             >
                 <Icon d="M12 5v14M5 12h14" size={24} />
             </button>

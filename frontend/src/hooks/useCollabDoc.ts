@@ -8,6 +8,7 @@ import {
     encodeAwarenessUpdate,
     removeAwarenessStates,
 } from 'y-protocols/awareness'
+import { getGuestKey } from '../lib/identity'
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:5000'
 
@@ -45,20 +46,21 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
     const [status, setStatus] = useState<ConnectionStatus>('connecting')
     const [error, setError] = useState('')
     const [waiting, setWaiting] = useState(false)
+    const [synced, setSynced] = useState(false)
+    const [nameTaken, setNameTaken] = useState(false)
     const [requests, setRequests] = useState<JoinRequest[]>([])
     const socketRef = useRef<Socket | null>(null)
-    const [synced, setSynced] = useState(false)
 
     useEffect(() => {
         setError('')
-        setSynced(false)
         setWaiting(false)
+        setSynced(false)
+        setNameTaken(false)
         setRequests([])
 
         const ydoc = new Y.Doc()
         const awareness = new Awareness(ydoc)
         const palette = COLORS[ydoc.clientID % COLORS.length]
-
         awareness.setLocalStateField('user', {
             name: userName,
             color: palette.color,
@@ -75,7 +77,6 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
             if (origin === 'remote') return
             socket.emit('update', docId, update)
         }
-
         const onAwarenessUpdate = ({ added, updated, removed }: AwarenessChange, origin: unknown) => {
             if (origin === 'remote') return
             socket.emit(
@@ -84,7 +85,6 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
                 encodeAwarenessUpdate(awareness, [...added, ...updated, ...removed])
             )
         }
-
         ydoc.on('update', onDocUpdate)
         awareness.on('update', onAwarenessUpdate)
 
@@ -96,48 +96,44 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
                 name: userName,
                 token: localStorage.getItem('token') ?? undefined,
                 joinCode,
+                guestKey: getGuestKey(),
             })
         })
-
         socket.on('doc-error', (message: string) => {
             setError(message)
             socket.disconnect()
         })
-
+        socket.on('name-taken', () => {
+            setNameTaken(true)
+            socket.disconnect()
+        })
         socket.on('waiting', () => setWaiting(true))
-
         socket.on('declined', () => {
             setWaiting(false)
             setError('The owner declined your request to join.')
             socket.disconnect()
         })
-
         socket.on('pending-requests', (reqDocId: string, list: JoinRequest[]) => {
             if (reqDocId === docId) setRequests(list)
         })
-
         socket.on('sync', (state: ArrayBuffer) => {
             setWaiting(false)
             setSynced(true)
             Y.applyUpdate(ydoc, new Uint8Array(state), 'remote')
+            // push anything typed while offline, then announce ourselves
             socket.emit('update', docId, Y.encodeStateAsUpdate(ydoc))
             sendOwnAwareness()
         })
-
         socket.on('update', (update: ArrayBuffer) => {
             Y.applyUpdate(ydoc, new Uint8Array(update), 'remote')
         })
-
         socket.on('awareness', (update: ArrayBuffer) => {
             applyAwarenessUpdate(awareness, new Uint8Array(update), 'remote')
         })
-
         socket.on('peer-joined', sendOwnAwareness)
-
         socket.on('peer-left', (clientId: number) => {
             removeAwarenessStates(awareness, [clientId], 'remote')
         })
-
         socket.on('disconnect', () => setStatus('disconnected'))
 
         setSession({ ydoc, awareness })
@@ -160,5 +156,5 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
         [docId]
     )
 
-    return { session, status, error, waiting, requests, respond, synced }
+    return { session, status, error, waiting, requests, respond, synced, nameTaken }
 }
