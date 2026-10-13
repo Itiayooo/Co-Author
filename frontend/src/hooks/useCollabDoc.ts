@@ -30,7 +30,7 @@ export interface JoinRequest {
 }
 
 interface Session {
-    ytext: Y.Text
+    ydoc: Y.Doc
     awareness: Awareness
 }
 
@@ -54,9 +54,9 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
         setRequests([])
 
         const ydoc = new Y.Doc()
-        const ytext = ydoc.getText('content')
         const awareness = new Awareness(ydoc)
         const palette = COLORS[ydoc.clientID % COLORS.length]
+
         awareness.setLocalStateField('user', {
             name: userName,
             color: palette.color,
@@ -73,6 +73,7 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
             if (origin === 'remote') return
             socket.emit('update', docId, update)
         }
+
         const onAwarenessUpdate = ({ added, updated, removed }: AwarenessChange, origin: unknown) => {
             if (origin === 'remote') return
             socket.emit(
@@ -81,6 +82,7 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
                 encodeAwarenessUpdate(awareness, [...added, ...updated, ...removed])
             )
         }
+
         ydoc.on('update', onDocUpdate)
         awareness.on('update', onAwarenessUpdate)
 
@@ -94,39 +96,48 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
                 joinCode,
             })
         })
+
         socket.on('doc-error', (message: string) => {
             setError(message)
             socket.disconnect()
         })
+
         socket.on('waiting', () => setWaiting(true))
+
         socket.on('declined', () => {
             setWaiting(false)
             setError('The owner declined your request to join.')
             socket.disconnect()
         })
+
         socket.on('pending-requests', (reqDocId: string, list: JoinRequest[]) => {
             if (reqDocId === docId) setRequests(list)
         })
+
         socket.on('sync', (state: ArrayBuffer) => {
             setWaiting(false)
             Y.applyUpdate(ydoc, new Uint8Array(state), 'remote')
-            // push anything typed while offline, then announce ourselves
             socket.emit('update', docId, Y.encodeStateAsUpdate(ydoc))
             sendOwnAwareness()
         })
+
         socket.on('update', (update: ArrayBuffer) => {
             Y.applyUpdate(ydoc, new Uint8Array(update), 'remote')
         })
+
         socket.on('awareness', (update: ArrayBuffer) => {
             applyAwarenessUpdate(awareness, new Uint8Array(update), 'remote')
         })
+
         socket.on('peer-joined', sendOwnAwareness)
+
         socket.on('peer-left', (clientId: number) => {
             removeAwarenessStates(awareness, [clientId], 'remote')
         })
+
         socket.on('disconnect', () => setStatus('disconnected'))
 
-        setSession({ ytext, awareness })
+        setSession({ ydoc, awareness })
 
         return () => {
             ydoc.off('update', onDocUpdate)

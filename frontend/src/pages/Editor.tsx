@@ -9,8 +9,7 @@ import PresenceAvatars from '../components/PresenceAvatars'
 import DocTitle from '../components/DocTitle'
 import ShareDialog from '../components/ShareDialog'
 import JoinRequests from '../components/JoinRequests'
-import EditorSplit from '../components/EditorSplit'
-
+import NoteEditor from '../components/NoteEditor'
 
 const statusText = {
     connecting: 'Connecting...',
@@ -26,7 +25,6 @@ export default function Editor() {
     const [doc, setDoc] = useState<Doc | null>(null)
     const [notFound, setNotFound] = useState(false)
     const [shareOpen, setShareOpen] = useState(false)
-
 
     useEffect(() => {
         getDocument(id)
@@ -71,12 +69,21 @@ export default function Editor() {
                     </button>
                 </div>
             </header>
+
             <main className="min-h-0 flex-1">
-                {session && <EditorSplit ytext={session.ytext} awareness={session.awareness} />}
+                {session && (
+                    <NoteEditor
+                        key={session.ydoc.clientID}
+                        ydoc={session.ydoc}
+                        awareness={session.awareness}
+                    />
+                )}
             </main>
+
             {shareOpen && doc && (
                 <ShareDialog doc={doc} onClose={() => setShareOpen(false)} onChange={setDoc} />
             )}
+
             <JoinRequests requests={requests} onRespond={respond} />
         </div>
     )
