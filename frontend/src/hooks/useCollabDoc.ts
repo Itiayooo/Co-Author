@@ -47,9 +47,11 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
     const [waiting, setWaiting] = useState(false)
     const [requests, setRequests] = useState<JoinRequest[]>([])
     const socketRef = useRef<Socket | null>(null)
+    const [synced, setSynced] = useState(false)
 
     useEffect(() => {
         setError('')
+        setSynced(false)
         setWaiting(false)
         setRequests([])
 
@@ -116,6 +118,7 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
 
         socket.on('sync', (state: ArrayBuffer) => {
             setWaiting(false)
+            setSynced(true)
             Y.applyUpdate(ydoc, new Uint8Array(state), 'remote')
             socket.emit('update', docId, Y.encodeStateAsUpdate(ydoc))
             sendOwnAwareness()
@@ -157,5 +160,5 @@ export function useCollabDoc(docId: string, userName: string, joinCode?: string)
         [docId]
     )
 
-    return { session, status, error, waiting, requests, respond }
+    return { session, status, error, waiting, requests, respond, synced }
 }

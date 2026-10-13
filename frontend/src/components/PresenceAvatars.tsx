@@ -26,13 +26,13 @@ export default function PresenceAvatars({ users, selfId }: Props) {
                     key={u.clientId}
                     title={u.clientId === selfId ? `${u.name} (you)` : u.name}
                     style={{ backgroundColor: u.color }}
-                    className="-ml-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-xs font-medium text-white first:ml-0"
+                    className="-ml-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface text-xs font-medium text-white first:ml-0"
                 >
                     {initials(u.name)}
                 </div>
             ))}
             {extra > 0 && (
-                <div className="-ml-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-gray-200 text-xs font-medium text-gray-600">
+                <div className="-ml-2 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-gray-200 text-xs font-medium text-gray-600">
                     +{extra}
                 </div>
             )}

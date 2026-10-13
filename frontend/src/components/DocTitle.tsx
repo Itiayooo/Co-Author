@@ -34,7 +34,7 @@ export default function DocTitle({ value, onSave }: Props) {
     }
 
     return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
             <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -42,10 +42,10 @@ export default function DocTitle({ value, onSave }: Props) {
                 onKeyDown={(e) => {
                     if (e.key === 'Enter') e.currentTarget.blur()
                 }}
-                aria-label="Document title"
-                className="w-56 rounded px-2 py-1 text-sm font-medium outline-none hover:bg-gray-100 focus:bg-gray-100"
+                aria-label="Board title"
+                className="w-32 rounded-md bg-transparent px-2 py-1 text-sm font-semibold outline-none hover:bg-desk focus:bg-desk focus:ring-2 focus:ring-accent/30 sm:w-48"
             />
-            <span className="text-xs text-gray-400">{stateText[state]}</span>
+            <span className="hidden text-xs text-muted sm:inline">{stateText[state]}</span>
         </div>
     )
 }

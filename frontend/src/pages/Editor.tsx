@@ -5,22 +5,15 @@ import { useCollabDoc } from '../hooks/useCollabDoc'
 import { usePresence } from '../hooks/usePresence'
 import { getDocument, updateDocument } from '../lib/documents'
 import type { Doc } from '../types/document'
-import PresenceAvatars from '../components/PresenceAvatars'
+import Board from '../components/Board'
 import DocTitle from '../components/DocTitle'
 import ShareDialog from '../components/ShareDialog'
 import JoinRequests from '../components/JoinRequests'
-import NoteEditor from '../components/NoteEditor'
-
-const statusText = {
-    connecting: 'Connecting...',
-    connected: 'Live',
-    disconnected: 'Offline',
-}
 
 export default function Editor() {
     const { id = '' } = useParams()
     const { user } = useAuth()
-    const { session, status, requests, respond } = useCollabDoc(id, user?.name ?? 'Anonymous')
+    const { session, status, synced, requests, respond } = useCollabDoc(id, user?.name ?? 'Anonymous')
     const users = usePresence(session?.awareness ?? null)
     const [doc, setDoc] = useState<Doc | null>(null)
     const [notFound, setNotFound] = useState(false)
@@ -39,51 +32,50 @@ export default function Editor() {
     if (notFound) {
         return (
             <div className="p-8 text-sm">
-                Document not found.{' '}
-                <Link to="/" className="text-indigo-600 hover:underline">
-                    Back to docs
+                Board not found.{' '}
+                <Link to="/" className="font-semibold text-accent hover:underline">
+                    Back to boards
                 </Link>
             </div>
         )
     }
 
     return (
-        <div className="flex h-screen flex-col bg-white text-gray-900">
-            <header className="flex items-center justify-between border-b border-gray-200 px-4 py-2 text-sm">
-                <div className="flex items-center gap-4">
-                    <Link to="/" className="text-gray-500 hover:text-gray-900">
-                        ← Docs
-                    </Link>
-                    {doc && <DocTitle value={doc.title} onSave={saveTitle} />}
-                </div>
-                <div className="flex items-center gap-4">
-                    <PresenceAvatars users={users} selfId={session?.awareness.clientID} />
-                    <span className={status === 'connected' ? 'text-green-600' : 'text-gray-400'}>
-                        {statusText[status]}
-                    </span>
-                    <button
-                        onClick={() => setShareOpen(true)}
-                        className="rounded bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
-                    >
-                        Share
-                    </button>
-                </div>
-            </header>
-
-            <main className="min-h-0 flex-1">
-                {session && (
-                    <NoteEditor
-                        key={session.ydoc.clientID}
-                        ydoc={session.ydoc}
-                        awareness={session.awareness}
-                    />
-                )}
-            </main>
-
+        <div className="h-dvh">
+            {session && (
+                <Board
+                    key={session.ydoc.clientID}
+                    ydoc={session.ydoc}
+                    awareness={session.awareness}
+                    status={status}
+                    synced={synced}
+                    users={users}
+                    selfId={session.awareness.clientID}
+                    brand={
+                        <>
+                            <Link
+                                to="/"
+                                aria-label="Back to boards"
+                                className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-sm font-bold text-white"
+                            >
+                                C
+                            </Link>
+                            {doc && <DocTitle value={doc.title} onSave={saveTitle} />}
+                        </>
+                    }
+                    actions={
+                        <button
+                            onClick={() => setShareOpen(true)}
+                            className="ml-1 rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                        >
+                            Share
+                        </button>
+                    }
+                />
+            )}
             {shareOpen && doc && (
                 <ShareDialog doc={doc} onClose={() => setShareOpen(false)} onChange={setDoc} />
             )}
-
             <JoinRequests requests={requests} onRespond={respond} />
         </div>
     )

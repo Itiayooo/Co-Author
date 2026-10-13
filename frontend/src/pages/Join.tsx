@@ -5,9 +5,10 @@ import { useAuth } from '../context/AuthContext'
 import { getDocumentByCode } from '../lib/documents'
 import { useCollabDoc } from '../hooks/useCollabDoc'
 import { usePresence } from '../hooks/usePresence'
-// import EditorSplit from '../components/EditorSplit'
-import PresenceAvatars from '../components/PresenceAvatars'
-
+import Board from '../components/Board'
+import AuthShell from '../components/AuthShell'
+import TextField from '../components/TextField'
+import Button from '../components/Button'
 
 interface RoomProps {
     docId: string
@@ -17,38 +18,48 @@ interface RoomProps {
 }
 
 function GuestRoom({ docId, title, name, code }: RoomProps) {
-    const { session, status, error, waiting } = useCollabDoc(docId, name, code)
+    const { session, status, error, waiting, synced } = useCollabDoc(docId, name, code)
     const users = usePresence(session?.awareness ?? null)
 
     if (error) {
-        return <div className="p-8 text-sm text-gray-700">{error}</div>
+        return <div className="p-8 text-sm text-muted">{error}</div>
     }
 
     if (waiting) {
         return (
             <div className="flex min-h-screen items-center justify-center px-4">
                 <div className="text-center">
-                    <p className="font-medium text-gray-900">Waiting for the owner to let you in</p>
-                    <p className="mt-1 text-sm text-gray-500">This page opens as soon as they accept.</p>
+                    <p className="font-semibold">Waiting for the owner to let you in</p>
+                    <p className="mt-1 text-sm text-muted">This page opens as soon as they accept.</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="flex h-screen flex-col bg-white text-gray-900">
-            <header className="flex items-center justify-between border-b border-gray-200 px-4 py-2 text-sm">
-                <span className="font-medium">{title}</span>
-                <div className="flex items-center gap-4">
-                    <PresenceAvatars users={users} selfId={session?.awareness.clientID} />
-                    <span className={status === 'connected' ? 'text-green-600' : 'text-gray-400'}>
-                        {status === 'connected' ? 'Live' : status === 'connecting' ? 'Connecting...' : 'Offline'}
-                    </span>
-                </div>
-            </header>
-            <main className="min-h-0 flex-1">
-                {session && <EditorSplit ytext={session.ytext} awareness={session.awareness} />}
-            </main>
+        <div className="h-dvh">
+            {session && (
+                <Board
+                    key={session.ydoc.clientID}
+                    ydoc={session.ydoc}
+                    awareness={session.awareness}
+                    status={status}
+                    synced={synced}
+                    users={users}
+                    selfId={session.awareness.clientID}
+                    brand={
+                        <>
+                            <span
+                                aria-hidden="true"
+                                className="grid h-8 w-8 place-items-center rounded-lg bg-accent text-sm font-bold text-white"
+                            >
+                                C
+                            </span>
+                            <span className="max-w-40 truncate px-2 text-sm font-semibold">{title}</span>
+                        </>
+                    }
+                />
+            )}
         </div>
     )
 }
@@ -79,38 +90,36 @@ export default function Join() {
     }
 
     if (notFound) {
-        return <div className="p-8 text-sm text-gray-700">This link is invalid or has expired.</div>
+        return <div className="p-8 text-sm text-muted">This link is invalid or has expired.</div>
     }
     if (!info) return null
 
     if (!joined) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-                <form
-                    onSubmit={handleJoin}
-                    className="w-full max-w-sm rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
-                >
-                    <h1 className="mb-1 text-xl font-medium text-gray-900">Join "{info.title}"</h1>
-                    <p className="mb-6 text-sm text-gray-500">Pick a name others will see.</p>
-                    <input
+            <AuthShell
+                title={`Join "${info.title}"`}
+                subtitle="Pick a name others will see."
+                footer="No account needed."
+            >
+                <form onSubmit={handleJoin}>
+                    <TextField
+                        label="Your name"
                         autoFocus
                         required
                         maxLength={30}
+                        autoComplete="nickname"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        className="mb-4 w-full rounded border border-gray-300 px-3 py-2 text-sm outline-none focus:border-indigo-600"
                     />
-                    <button
-                        type="submit"
-                        className="w-full rounded bg-indigo-600 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-                    >
+                    <Button type="submit" className="w-full">
                         Join
-                    </button>
+                    </Button>
                 </form>
-            </div>
+            </AuthShell>
         )
     }
 
-    return <GuestRoom docId={info.id} title={info.title} name={name.trim()} code={code.toUpperCase()} />
+    return (
+        <GuestRoom docId={info.id} title={info.title} name={name.trim()} code={code.toUpperCase()} />
+    )
 }
