@@ -57,6 +57,7 @@ export default function NoteWindow({
     const start = useRef<{ px: number; py: number; x: number; y: number } | null>(null)
     const [dragging, setDragging] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
+    const [editing, setEditing] = useState(false)
     const autoTitle = useNoteTitle(ydoc, note.id)
     const title = note.title?.trim() || autoTitle
     const pop = usePopOut(title)
@@ -102,6 +103,11 @@ export default function NoteWindow({
 
     const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
         if (e.target !== e.currentTarget) return
+        if (e.key === 'F2' && canRename) {
+            e.preventDefault()
+            setEditing(true)
+            return
+        }
         if (e.key === 'Enter') {
             e.preventDefault()
             onToggleRoll(note.id)
@@ -135,7 +141,7 @@ export default function NoteWindow({
             >
                 <div
                     tabIndex={0}
-                    aria-label="Note bar. Drag to move, arrow keys also move, Enter rolls it up"
+                    aria-label="Note bar. Drag to move, arrow keys also move, Enter rolls it up, F2 renames"
                     onPointerDown={onPointerDown}
                     onPointerMove={onPointerMove}
                     onPointerUp={endDrag}
@@ -158,20 +164,36 @@ export default function NoteWindow({
                             <Icon d="M6 9l6 6 6-6" />
                         </span>
                     </button>
-                    {canRename ? (
+                    {editing ? (
                         <input
+                            autoFocus
                             value={note.title ?? ''}
                             onChange={(e) => onRename(note.id, e.target.value)}
+                            onFocus={(e) => e.currentTarget.select()}
+                            onBlur={() => setEditing(false)}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') e.currentTarget.blur()
+                                if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur()
                             }}
                             placeholder={autoTitle}
                             maxLength={60}
                             aria-label="Note title"
-                            className="min-w-0 flex-1 cursor-text truncate rounded-md bg-transparent px-1.5 py-0.5 text-[13px] font-semibold outline-none placeholder:opacity-45 focus:bg-current/10"
+                            className="min-w-0 flex-1 rounded-md bg-current/10 px-1.5 py-0.5 text-[13px] font-semibold outline-none placeholder:opacity-45"
                         />
                     ) : (
-                        <span className="min-w-0 flex-1 truncate px-1.5 text-[13px] font-semibold">{title}</span>
+                        <>
+                            <span
+                                title={canRename ? 'Double click to rename' : undefined}
+                                onDoubleClick={(e) => {
+                                    if (!canRename) return
+                                    e.stopPropagation()
+                                    setEditing(true)
+                                }}
+                                className="min-w-0 truncate px-1.5 text-[13px] font-semibold"
+                            >
+                                {title}
+                            </span>
+                            <span className="flex-1" />
+                        </>
                     )}
                     {pop.supported && (
                         <button
