@@ -15,11 +15,13 @@ import type { PresenceUser } from '../hooks/usePresence'
 import {
     BAR_HEIGHT,
     NOTE_WIDTH,
+    canRenameNote,
     createNote,
     deleteNote,
     getNotesMap,
     moveNote,
     recolorNote,
+    retitleNote,
 } from '../lib/board'
 import type { NoteMeta } from '../lib/board'
 import type { NoteColor } from '../lib/noteColors'
@@ -53,6 +55,8 @@ function DeskBoard({
     actions,
 }: BoardProps) {
     const notes = useBoardNotes(ydoc)
+    const me = (awareness.getLocalState()?.user?.name as string | undefined) ?? 'Guest'
+
     const deskRef = useRef<HTMLDivElement>(null)
     const dockRef = useRef<HTMLDivElement>(null)
     const orbRef = useRef<HTMLButtonElement>(null)
@@ -135,7 +139,7 @@ function DeskBoard({
     const front = (id: string) => setZ((prev) => ({ ...prev, [id]: ++zTop.current }))
 
     const addNote = () => {
-        const n = createNote(getNotesMap(ydoc), notes.length)
+        const n = createNote(getNotesMap(ydoc), notes.length, me)
         front(n.id)
     }
 
@@ -149,6 +153,9 @@ function DeskBoard({
 
     const setColor = (id: string, color: NoteColor) =>
         recolorNote(getNotesMap(ydoc), id, color)
+
+    const renameNote = (id: string, title: string) =>
+        retitleNote(getNotesMap(ydoc), id, title)
 
     return (
         <div ref={deskRef} className="relative h-full overflow-hidden bg-desk">
@@ -240,6 +247,8 @@ function DeskBoard({
                     onToggleRoll={toggleRoll}
                     onColor={setColor}
                     onClose={removeNote}
+                    canRename={canRenameNote(n, me)}
+                    onRename={renameNote}
                 />
             ))}
         </div>

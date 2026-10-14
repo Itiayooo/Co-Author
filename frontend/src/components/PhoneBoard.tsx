@@ -6,7 +6,15 @@ import { useBoardNotes } from '../hooks/useBoardNotes'
 import { useNoteSummaries } from '../hooks/useNoteSummaries'
 import { useInert } from '../hooks/useInert'
 import { NOTE_COLORS, noteBar, noteBg } from '../lib/noteColors'
-import { createNote, deleteNote, getNotesMap, noteField, recolorNote } from '../lib/board'
+import {
+    canRenameNote,
+    createNote,
+    deleteNote,
+    getNotesMap,
+    noteField,
+    recolorNote,
+    retitleNote,
+} from '../lib/board'
 import type { BoardProps } from './Board'
 
 const roundButton =
@@ -23,6 +31,8 @@ export default function PhoneBoard({
     actions,
 }: BoardProps) {
     const notes = useBoardNotes(ydoc)
+    const me = (awareness.getLocalState()?.user?.name as string | undefined) ?? 'Guest'
+
     const summaries = useNoteSummaries(
         ydoc,
         notes.map((n) => n.id)
@@ -45,7 +55,7 @@ export default function PhoneBoard({
     }
 
     const addNote = () => {
-        const n = createNote(getNotesMap(ydoc), notes.length)
+        const n = createNote(getNotesMap(ydoc), notes.length, me)
         open(n.id)
     }
 
@@ -59,9 +69,10 @@ export default function PhoneBoard({
         const q = query.trim().toLowerCase()
         const newestFirst = [...notes].reverse()
         if (!q) return newestFirst
+
         return newestFirst.filter((n) => {
             const s = summaries[n.id]
-            return s ? `${s.title} ${s.preview}`.toLowerCase().includes(q) : false
+            return s ? `${n.title ?? ''} ${s.title} ${s.preview}`.toLowerCase().includes(q) : false
         })
     }, [notes, summaries, query])
 
@@ -95,28 +106,37 @@ export default function PhoneBoard({
             <ul className="flex-1 space-y-2.5 overflow-auto px-3 pb-28">
                 {visible.map((n) => {
                     const s = summaries[n.id]
+
                     return (
                         <li key={n.id}>
                             <button
                                 onClick={() => open(n.id)}
                                 className={`w-full rounded-xl px-4 py-3 text-left text-note-ink shadow-note focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${noteBg[n.color]}`}
                             >
-                                <span className="block truncate font-bold">{s?.title ?? 'Empty note'}</span>
+                                <span className="block truncate font-bold">
+                                    {n.title?.trim() || s?.title || 'Empty note'}
+                                </span>
                                 {s?.preview && (
-                                    <span className="mt-0.5 line-clamp-2 block text-sm opacity-75">{s.preview}</span>
+                                    <span className="mt-0.5 line-clamp-2 block text-sm opacity-75">
+                                        {s.preview}
+                                    </span>
                                 )}
                             </button>
                         </li>
                     )
                 })}
+
                 {synced && notes.length === 0 && (
                     <li className="py-10 text-center">
                         <p className="font-semibold">No notes yet</p>
                         <p className="mt-1 text-sm text-muted">Tap + to add one.</p>
                     </li>
                 )}
+
                 {notes.length > 0 && visible.length === 0 && (
-                    <li className="py-10 text-center text-sm text-muted">No notes match your search.</li>
+                    <li className="py-10 text-center text-sm text-muted">
+                        No notes match your search.
+                    </li>
                 )}
             </ul>
 
@@ -144,7 +164,24 @@ export default function PhoneBoard({
                             >
                                 <Icon d="M15 18l-6-6 6-6" size={20} />
                             </button>
-                            <span className="flex-1" />
+
+                            {canRenameNote(active, me) ? (
+                                <input
+                                    value={active.title ?? ''}
+                                    onChange={(e) =>
+                                        retitleNote(getNotesMap(ydoc), active.id, e.target.value)
+                                    }
+                                    placeholder={summaries[active.id]?.title ?? 'Add a title'}
+                                    maxLength={60}
+                                    aria-label="Note title"
+                                    className="min-w-0 flex-1 bg-transparent px-2 text-base font-semibold outline-none placeholder:opacity-50"
+                                />
+                            ) : (
+                                <span className="min-w-0 flex-1 truncate px-2 font-semibold">
+                                    {active.title?.trim() || summaries[active.id]?.title || 'Empty note'}
+                                </span>
+                            )}
+
                             <div role="group" aria-label="Note colour" className="flex gap-2 pr-1">
                                 {NOTE_COLORS.map((c) => (
                                     <button
@@ -152,11 +189,14 @@ export default function PhoneBoard({
                                         aria-label={c}
                                         aria-pressed={active.color === c}
                                         onClick={() => recolorNote(getNotesMap(ydoc), active.id, c)}
-                                        className={`h-7 w-7 rounded-full border border-black/20 ${noteBar[c]} ${active.color === c ? 'ring-2 ring-ink ring-offset-2 ring-offset-transparent' : ''
+                                        className={`h-7 w-7 rounded-full border border-black/20 ${noteBar[c]} ${active.color === c
+                                            ? 'ring-2 ring-ink ring-offset-2 ring-offset-transparent'
+                                            : ''
                                             }`}
                                     />
                                 ))}
                             </div>
+
                             <button
                                 aria-label="Delete note"
                                 onClick={() => removeNote(active.id)}
@@ -165,6 +205,7 @@ export default function PhoneBoard({
                                 <Icon d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 001 1h8a1 1 0 001-1l1-12M9 7V4h6v3" size={20} />
                             </button>
                         </div>
+
                         <NoteEditor
                             key={active.id}
                             ydoc={ydoc}

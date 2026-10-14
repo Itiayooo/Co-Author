@@ -10,29 +10,31 @@ import { registerDocumentSocket } from './sockets/document.socket.js'
 
 dotenv.config()
 
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
+const CLIENT_URLS = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')
+    .map((url) => url.trim())
 
 const app = express()
-app.use(cors({ origin: CLIENT_URL }))
+app.use(cors({ origin: CLIENT_URLS }))
 app.use(express.json())
 
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' })
+    res.json({ status: 'ok' })
 })
 app.use('/api/users', userRoutes)
 app.use('/api/documents', documentRoutes)
 
 const server = http.createServer(app)
-const io = new Server(server, { cors: { origin: CLIENT_URL } })
+const io = new Server(server, { cors: { origin: CLIENT_URLS } })
 registerDocumentSocket(io)
 
 const PORT = process.env.PORT || 5000
 
 connectDB()
-  .then(() => {
-    server.listen(PORT, () => console.log(`Server running on port ${PORT}`))
-  })
-  .catch((err) => {
-    console.error('Failed to connect to MongoDB:', err)
-    process.exit(1)
-  })
+    .then(() => {
+        server.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+    })
+    .catch((err) => {
+        console.error('Failed to connect to MongoDB:', err)
+        process.exit(1)
+    })

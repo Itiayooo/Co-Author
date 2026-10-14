@@ -261,3 +261,8 @@
     animation: none;
   }
 }
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, currentColor 28%, transparent) transparent;
+}

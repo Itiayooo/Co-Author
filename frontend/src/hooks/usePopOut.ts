@@ -35,8 +35,9 @@ export function usePopOut(title: string) {
     const open = useCallback(async () => {
         const api = (window as PipHost).documentPictureInPicture
         if (!api) return
-        const pip = await api.requestWindow({ width: 340, height: 400 })
+        const pip = await api.requestWindow({ width: 330, height: 340 })
         copyStyles(pip)
+        pip.document.body.style.overflow = 'hidden'
         pip.document.title = title
         pip.addEventListener('pagehide', () => setWin(null))
         setWin(pip)

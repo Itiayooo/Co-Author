@@ -28,6 +28,8 @@ interface Props {
     onToggleRoll: (id: string) => void
     onColor: (id: string, color: NoteColor) => void
     onClose: (id: string) => void
+    canRename: boolean
+    onRename: (id: string, title: string) => void
 }
 
 const barButton =
@@ -47,17 +49,24 @@ export default function NoteWindow({
     onToggleRoll,
     onColor,
     onClose,
+    canRename,
+    onRename,
 }: Props) {
     const rootRef = useRef<HTMLDivElement>(null)
     const foldRef = useRef<HTMLDivElement>(null)
     const start = useRef<{ px: number; py: number; x: number; y: number } | null>(null)
     const [dragging, setDragging] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
-    const title = useNoteTitle(ydoc, note.id)
+    const autoTitle = useNoteTitle(ydoc, note.id)
+    const title = note.title?.trim() || autoTitle
     const pop = usePopOut(title)
 
     useInert(rootRef, minimized)
     useInert(foldRef, rolled)
+
+    useEffect(() => {
+        if (pop.win) pop.win.document.title = title
+    }, [pop.win, title])
 
     useEffect(() => {
         if (!menuOpen) return
@@ -71,7 +80,7 @@ export default function NoteWindow({
     }, [menuOpen])
 
     const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
-        if ((e.target as HTMLElement).closest('button')) return
+        if ((e.target as HTMLElement).closest('button, input')) return
         e.currentTarget.setPointerCapture(e.pointerId)
         start.current = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y }
         setDragging(true)
@@ -132,7 +141,7 @@ export default function NoteWindow({
                     onPointerUp={endDrag}
                     onPointerCancel={endDrag}
                     onDoubleClick={(e) => {
-                        if (!(e.target as HTMLElement).closest('button')) onToggleRoll(note.id)
+                        if (!(e.target as HTMLElement).closest('button, input')) onToggleRoll(note.id)
                     }}
                     onKeyDown={onKeyDown}
                     className={`flex h-9 cursor-grab touch-none select-none items-center gap-0.5 px-1 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent active:cursor-grabbing ${noteBar[note.color]
@@ -149,12 +158,21 @@ export default function NoteWindow({
                             <Icon d="M6 9l6 6 6-6" />
                         </span>
                     </button>
-                    <span
-                        className={`min-w-0 flex-1 truncate px-1.5 text-[13px] font-semibold transition-opacity duration-200 ${rolled ? 'opacity-100' : 'opacity-0'
-                            }`}
-                    >
-                        {title}
-                    </span>
+                    {canRename ? (
+                        <input
+                            value={note.title ?? ''}
+                            onChange={(e) => onRename(note.id, e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') e.currentTarget.blur()
+                            }}
+                            placeholder={autoTitle}
+                            maxLength={60}
+                            aria-label="Note title"
+                            className="min-w-0 flex-1 cursor-text truncate rounded-md bg-transparent px-1.5 py-0.5 text-[13px] font-semibold outline-none placeholder:opacity-45 focus:bg-current/10"
+                        />
+                    ) : (
+                        <span className="min-w-0 flex-1 truncate px-1.5 text-[13px] font-semibold">{title}</span>
+                    )}
                     {pop.supported && (
                         <button
                             type="button"
@@ -203,7 +221,7 @@ export default function NoteWindow({
 
             {pop.win &&
                 createPortal(
-                    <PopOutNote ydoc={ydoc} awareness={awareness} note={note} title={title} />,
+                    <PopOutNote ydoc={ydoc} awareness={awareness} note={note} title={title} win={pop.win} />,
                     pop.win.document.body
                 )}
 
