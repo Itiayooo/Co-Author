@@ -15,8 +15,9 @@ const CLIENT_URLS = (process.env.CLIENT_URL || 'http://localhost:5173')
     .map((url) => url.trim())
 
 const app = express()
+app.set('trust proxy', 1)
+app.use(express.json({ limit: '100kb' }))   
 app.use(cors({ origin: CLIENT_URLS }))
-app.use(express.json())
 
 app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' })

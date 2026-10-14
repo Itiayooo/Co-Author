@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
 import HeroStage from '../components/landing/HeroStage'
 import { buttonClass } from '../components/Button'
+import { wakeServer } from '../lib/api'
 
-// set VITE_DEMO_CODE to the join code of an open board to show the demo button
 const DEMO_CODE = import.meta.env.VITE_DEMO_CODE as string | undefined
 
 const STEPS = [
@@ -52,6 +52,10 @@ export default function Landing() {
         const c = code.trim().toUpperCase()
         if (c) navigate(`/join/${c}`)
     }
+
+    useEffect(() => {
+        wakeServer()
+    }, [])
 
     return (
         <div className="min-h-screen bg-page text-ink">
@@ -131,8 +135,8 @@ export default function Landing() {
                             <div
                                 key={s.n}
                                 className={`py-6 min-[900px]:pb-2 min-[900px]:pr-8 ${i > 0
-                                        ? 'border-t border-line min-[900px]:border-l min-[900px]:border-t-0 min-[900px]:pl-8'
-                                        : ''
+                                    ? 'border-t border-line min-[900px]:border-l min-[900px]:border-t-0 min-[900px]:pl-8'
+                                    : ''
                                     }`}
                             >
                                 <div className="mb-4 font-mono text-xs font-medium text-muted min-[900px]:mb-11">
