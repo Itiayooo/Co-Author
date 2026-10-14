@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useInstall } from '../hooks/useInstall'
 import Logo from './Logo'
+import { buttonClass } from './Button'
 
 export default function AppHeader() {
     const { user, logout } = useAuth()
+    const { canInstall, install } = useInstall()
 
     return (
         <header className="flex h-14 items-center justify-between border-b border-line bg-page px-4 sm:px-6">
@@ -11,6 +14,11 @@ export default function AppHeader() {
                 <Logo />
             </Link>
             <div className="flex items-center gap-2 text-sm">
+                {canInstall && (
+                    <button onClick={install} className={buttonClass('ghost', 'sm')}>
+                        Install app
+                    </button>
+                )}
                 <span className="hidden text-muted sm:inline">{user?.name}</span>
                 <button
                     onClick={logout}
