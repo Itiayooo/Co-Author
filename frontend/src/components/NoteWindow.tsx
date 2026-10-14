@@ -181,7 +181,7 @@ export default function NoteWindow({
                         />
                     ) : (
                         <>
-                            <span
+                            {/* <span
                                 title={canRename ? 'Double click to rename' : undefined}
                                 onDoubleClick={(e) => {
                                     if (!canRename) return
@@ -191,6 +191,18 @@ export default function NoteWindow({
                                 className="min-w-0 truncate px-1.5 text-[13px] font-semibold"
                             >
                                 {title}
+                            </span> */}
+                            <span
+                                title={canRename ? 'Double click to rename' : undefined}
+                                onDoubleClick={(e) => {
+                                    if (!canRename) return
+                                    e.stopPropagation()
+                                    setEditing(true)
+                                }}
+                                className={`min-w-0 truncate px-1.5 text-[13px] font-semibold ${canRename && !note.title?.trim() ? 'opacity-55' : ''
+                                    }`}
+                            >
+                                {canRename && !note.title?.trim() && autoTitle === 'Empty note' ? 'Add a title' : title}
                             </span>
                             <span className="flex-1" />
                         </>
