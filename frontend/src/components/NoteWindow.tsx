@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import type { KeyboardEvent, PointerEvent } from 'react'
 import type * as Y from 'yjs'
 import type { Awareness } from 'y-protocols/awareness'
 import NoteEditor from './NoteEditor'
+import PopOutNote from './PopOutNote'
 import Icon from './Icon'
 import { useInert } from '../hooks/useInert'
 import { useNoteTitle } from '../hooks/useNoteTitle'
+import { usePopOut } from '../hooks/usePopOut'
 import { NOTE_COLORS, noteBar, noteBg } from '../lib/noteColors'
 import type { NoteColor } from '../lib/noteColors'
 import { NOTE_WIDTH, noteField } from '../lib/board'
@@ -51,6 +54,7 @@ export default function NoteWindow({
     const [dragging, setDragging] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
     const title = useNoteTitle(ydoc, note.id)
+    const pop = usePopOut(title)
 
     useInert(rootRef, minimized)
     useInert(foldRef, rolled)
@@ -151,6 +155,17 @@ export default function NoteWindow({
                     >
                         {title}
                     </span>
+                    {pop.supported && (
+                        <button
+                            type="button"
+                            className={barButton}
+                            aria-label={pop.win ? 'Bring note back' : 'Open note in its own window'}
+                            title={pop.win ? 'Bring note back' : 'Pop out as a floating window'}
+                            onClick={() => (pop.win ? pop.close() : pop.open().catch(() => { }))}
+                        >
+                            <Icon d="M15 3h6v6M10 14L21 3M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                        </button>
+                    )}
                     <button
                         type="button"
                         data-menu-toggle
@@ -175,10 +190,22 @@ export default function NoteWindow({
                         }`}
                 >
                     <div ref={foldRef} className="min-h-0 overflow-hidden">
-                        <NoteEditor ydoc={ydoc} awareness={awareness} field={noteField(note.id)} />
+                        {pop.win ? (
+                            <p className="px-3.5 py-5 text-sm opacity-70">
+                                This note is open in its own window. Close that window to bring it back.
+                            </p>
+                        ) : (
+                            <NoteEditor ydoc={ydoc} awareness={awareness} field={noteField(note.id)} />
+                        )}
                     </div>
                 </div>
             </div>
+
+            {pop.win &&
+                createPortal(
+                    <PopOutNote ydoc={ydoc} awareness={awareness} note={note} title={title} />,
+                    pop.win.document.body
+                )}
 
             {menuOpen && (
                 <div

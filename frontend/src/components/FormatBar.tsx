@@ -2,7 +2,8 @@ import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/react'
 import Icon from './Icon'
 
-export default function FormatBar({ editor, large = false }: { editor: Editor; large?: boolean }) {
+// export default function FormatBar({ editor, large = false }: { editor: Editor; large?: boolean }) {
+export default function FormatBar({ editor }: { editor: Editor; large?: boolean }) {
     const active = useEditorState({
         editor,
         selector: ({ editor }) => ({

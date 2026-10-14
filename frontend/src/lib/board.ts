@@ -1,5 +1,5 @@
 import type * as Y from 'yjs'
-import { NOTE_COLORS } from './noteColors'
+// import { NOTE_COLORS } from './noteColors'
 import type { NoteColor } from './noteColors'
 
 export const DEFAULT_NOTE_COLOR: NoteColor = 'sky'
