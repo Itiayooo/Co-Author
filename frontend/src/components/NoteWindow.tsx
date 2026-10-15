@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { KeyboardEvent, PointerEvent } from 'react'
+import type { KeyboardEvent, MouseEvent, PointerEvent } from 'react'
 import type * as Y from 'yjs'
 import type { Awareness } from 'y-protocols/awareness'
 import NoteEditor from './NoteEditor'
@@ -54,7 +54,8 @@ export default function NoteWindow({
 }: Props) {
     const rootRef = useRef<HTMLDivElement>(null)
     const foldRef = useRef<HTMLDivElement>(null)
-    const start = useRef<{ px: number; py: number; x: number; y: number } | null>(null)
+    const titleRef = useRef<HTMLSpanElement>(null)
+    const drag = useRef<{ px: number; py: number; x: number; y: number; active: boolean } | null>(null)
     const [dragging, setDragging] = useState(false)
     const [menuOpen, setMenuOpen] = useState(false)
     const [editing, setEditing] = useState(false)
@@ -80,25 +81,46 @@ export default function NoteWindow({
         return () => document.removeEventListener('pointerdown', close)
     }, [menuOpen])
 
+    // the pointer is only captured once it really moves, so a double click on the
+    // title still reaches the title
     const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+        if (e.button !== 0) return
         if ((e.target as HTMLElement).closest('button, input')) return
-        e.currentTarget.setPointerCapture(e.pointerId)
-        start.current = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y }
-        setDragging(true)
+        drag.current = { px: e.clientX, py: e.clientY, x: pos.x, y: pos.y, active: false }
         onFront(note.id)
     }
 
     const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
-        const s = start.current
-        if (!s) return
-        onMove(note.id, s.x + e.clientX - s.px, s.y + e.clientY - s.py)
+        const d = drag.current
+        if (!d) return
+        const dx = e.clientX - d.px
+        const dy = e.clientY - d.py
+        if (!d.active) {
+            if (Math.hypot(dx, dy) < 4) return
+            d.active = true
+            e.currentTarget.setPointerCapture(e.pointerId)
+            setDragging(true)
+        }
+        onMove(note.id, d.x + dx, d.y + dy)
     }
 
     const endDrag = () => {
-        if (!start.current) return
-        start.current = null
-        setDragging(false)
-        onMoveEnd(note.id)
+        const d = drag.current
+        drag.current = null
+        if (d?.active) {
+            setDragging(false)
+            onMoveEnd(note.id)
+        }
+    }
+
+    // double click on the title renames, anywhere else on the bar folds the note
+    const onBarDoubleClick = (e: MouseEvent<HTMLDivElement>) => {
+        if ((e.target as HTMLElement).closest('button, input')) return
+        const r = titleRef.current?.getBoundingClientRect()
+        const onTitle =
+            !!r && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+        if (onTitle && canRename) setEditing(true)
+        else onToggleRoll(note.id)
     }
 
     const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -146,9 +168,7 @@ export default function NoteWindow({
                     onPointerMove={onPointerMove}
                     onPointerUp={endDrag}
                     onPointerCancel={endDrag}
-                    onDoubleClick={(e) => {
-                        if (!(e.target as HTMLElement).closest('button, input')) onToggleRoll(note.id)
-                    }}
+                    onDoubleClick={onBarDoubleClick}
                     onKeyDown={onKeyDown}
                     className={`flex h-9 cursor-grab touch-none select-none items-center gap-0.5 px-1 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent active:cursor-grabbing ${noteBar[note.color]
                         }`}
@@ -182,12 +202,8 @@ export default function NoteWindow({
                     ) : (
                         <>
                             <span
+                                ref={titleRef}
                                 title={canRename ? 'Double click to rename' : undefined}
-                                onDoubleClick={(e) => {
-                                    if (!canRename) return
-                                    e.stopPropagation()
-                                    setEditing(true)
-                                }}
                                 className={`min-w-0 truncate px-1.5 text-[13px] font-semibold ${canRename && !note.title?.trim() ? 'opacity-55' : ''
                                     }`}
                             >
