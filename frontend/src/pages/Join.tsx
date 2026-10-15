@@ -74,7 +74,12 @@ export default function Join() {
     const [notFound, setNotFound] = useState(false)
     const [name, setName] = useState(() => localStorage.getItem('guestName') ?? '')
     const [nameError, setNameError] = useState('')
-    const [joined, setJoined] = useState(false)
+    const [joined, setJoined] = useState(
+        () =>
+            !!localStorage.getItem('guestName') &&
+            sessionStorage.getItem(`joined:${code.toUpperCase()}`) === '1'
+    )
+
 
     useEffect(() => {
         getDocumentByCode(code)
@@ -91,6 +96,7 @@ export default function Join() {
         if (!name.trim()) return
         localStorage.setItem('guestName', name.trim())
         setNameError('')
+        sessionStorage.setItem(`joined:${code.toUpperCase()}`, '1')
         setJoined(true)
     }
 
@@ -141,6 +147,7 @@ export default function Join() {
             code={code.toUpperCase()}
             onNameTaken={() => {
                 setNameError('Someone already uses that name on this board. Pick another.')
+                sessionStorage.removeItem(`joined:${code.toUpperCase()}`)
                 setJoined(false)
             }}
         />

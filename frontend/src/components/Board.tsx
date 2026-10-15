@@ -56,7 +56,6 @@ function DeskBoard({
 }: BoardProps) {
     const notes = useBoardNotes(ydoc)
     const me = (awareness.getLocalState()?.user?.name as string | undefined) ?? 'Guest'
-
     const deskRef = useRef<HTMLDivElement>(null)
     const dockRef = useRef<HTMLDivElement>(null)
     const orbRef = useRef<HTMLButtonElement>(null)
@@ -151,11 +150,9 @@ function DeskBoard({
 
     const toggleRoll = (id: string) => setRolled((prev) => ({ ...prev, [id]: !prev[id] }))
 
-    const setColor = (id: string, color: NoteColor) =>
-        recolorNote(getNotesMap(ydoc), id, color)
+    const setColor = (id: string, color: NoteColor) => recolorNote(getNotesMap(ydoc), id, color)
 
-    const renameNote = (id: string, title: string) =>
-        retitleNote(getNotesMap(ydoc), id, title)
+    const renameNote = (id: string, title: string) => retitleNote(getNotesMap(ydoc), id, title)
 
     return (
         <div ref={deskRef} className="relative h-full overflow-hidden bg-desk">
@@ -180,15 +177,23 @@ function DeskBoard({
                     title="When on, moving a note moves it on everyone's screen"
                     className="flex h-8 items-center gap-2 rounded-lg px-2 text-xs font-medium hover:bg-desk focus-visible:outline-2 focus-visible:outline-accent"
                 >
-                    <span className={`relative h-4 w-7 rounded-full transition-colors ${sync ? 'bg-accent' : 'bg-line'}`}>
-                        <span className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-page transition-transform ${sync ? 'translate-x-3' : ''}`} />
+                    <span
+                        className={`relative h-4 w-7 rounded-full transition-colors ${sync ? 'bg-accent' : 'bg-line'
+                            }`}
+                    >
+                        <span
+                            className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-page transition-transform ${sync ? 'translate-x-3' : ''
+                                }`}
+                        />
                     </span>
                     <span className="hidden sm:inline">Move together</span>
                 </button>
                 <Divider />
                 <PresenceAvatars users={users} selfId={selfId} />
                 <span role="status" className="mx-1 flex items-center gap-1.5 text-xs text-muted">
-                    <span className={`h-2 w-2 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-muted'}`} />
+                    <span
+                        className={`h-2 w-2 rounded-full ${status === 'connected' ? 'bg-green-500' : 'bg-muted'}`}
+                    />
                     <span className="hidden sm:inline">
                         {status === 'connected' ? 'Live' : status === 'connecting' ? 'Connecting' : 'Offline'}
                     </span>
